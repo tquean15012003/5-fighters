@@ -15,9 +15,12 @@
     "compression": "^1.7.4",
     "http-status-codes": "^2.3.0",
     "mongodb": "^6.7.0",
-    "typescript": "^5.4.5"
+    "socket.io": "^4.7.5",
+    "typescript": "^5.4.5",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "@types/compression": "^1.7.5"
+    "@types/compression": "^1.7.5",
+    "@types/uuid": "^9.0.8"
   }
 }

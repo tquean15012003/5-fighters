@@ -4,6 +4,21 @@ import { asyncHandler } from "../../auth/checkAuth";
 
 const router = Router();
 
-router.post("/test", asyncHandler(chatController.testing));
+router.post(
+  "/createConversation",
+  asyncHandler(chatController.createConversation)
+);
+
+router.post(
+  "/allConversation/:id",
+  asyncHandler(chatController.allConversation)
+);
+
+router.post(
+  "/getConversationContent/:id",
+  asyncHandler(chatController.getConversationContent)
+);
+
+router.post("/senMessage", asyncHandler(chatController.senMessage));
 
 export default router;

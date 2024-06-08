@@ -32,6 +32,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(routes);
 
 instanceMongodb();
+// instanceMongodb.getConversations();
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   const error = new ErrorResponse("Not Found", 404);
