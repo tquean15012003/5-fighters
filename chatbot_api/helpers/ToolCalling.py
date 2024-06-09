@@ -4,7 +4,7 @@ logging.basicConfig(level=logging.INFO, force=True)
 logger = logging.getLogger(__name__)
 
 AVAILABLE_TOOLS = [
-    {"type": "code_interpreter"},
+    # {"type": "code_interpreter"},
     {
         "type": "function",
         "function": {
