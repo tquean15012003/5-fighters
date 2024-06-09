@@ -40,7 +40,7 @@ class ChatService {
       }
     });
 
-    return allConversations;
+    return filterConversations;
   }
 
   static async getConversationContent(conversationId: string) {
