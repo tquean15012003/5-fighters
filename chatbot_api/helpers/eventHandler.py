@@ -6,14 +6,14 @@ import threading
 
 from openai import OpenAI
 from dotenv import load_dotenv  # type: ignore
-from typing_extensions import override
-from typing import List, Literal, TypedDict
+from typing_extensions import override, TypedDict
+from typing import List, Literal
 from openai.types.beta.thread import Thread
 from openai import AssistantEventHandler, OpenAI
 from openai.types.beta.threads import Message, MessageDelta
 from openai.types.beta.threads.runs import ToolCall, RunStep
 
-from functionHandler import AVAILABLE_TOOLS, FUNCTION_MAP
+from helpers.functionHandler import AVAILABLE_TOOLS, FUNCTION_MAP
 
 Role = Literal["user", "assistant"]
 
@@ -23,7 +23,6 @@ class TMessage(TypedDict):
     content: str
 
 
-logging.basicConfig(level=logging.INFO, force=True)
 logger = logging.getLogger(__name__)
 
 
@@ -238,6 +237,9 @@ class EventHandler(AssistantEventHandler):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, force=True)
+    logger = logging.getLogger(__name__)
+
     load_dotenv()
 
     newLLM = LLM(support_type="auto_chat")
