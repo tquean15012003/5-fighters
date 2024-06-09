@@ -5,9 +5,11 @@ import { Center, HStack, Skeleton, Stack, Text } from "@chakra-ui/react";
 import React, { useMemo } from "react";
 import { NavLink } from "react-router-dom";
 import useConversationList from "../hooks/useConversationList";
+import { useAuthContext } from "../../auth/AuthContext";
 
 const ConversationListSidebar: React.FC = () => {
-  const { data, isLoading } = useConversationList();
+  const { authUser } = useAuthContext();
+  const { data, isLoading } = useConversationList(authUser.id);
 
   const transformedData = useMemo(() => {
     if (!data) {
@@ -60,7 +62,7 @@ const ConversationListSidebar: React.FC = () => {
           {transformedData.map((conversation) => (
             <HStack
               as={NavLink}
-              to={`/${conversation.conversationId}`}
+              to={`chat/${conversation.id}`}
               _hover={{
                 bg: `gray.700`,
               }}
@@ -69,7 +71,7 @@ const ConversationListSidebar: React.FC = () => {
                   bg: "gray.700",
                 },
               }}
-              key={conversation.conversationId}
+              key={conversation.id}
               p={2}
               role="group"
               borderRadius="md"
@@ -85,7 +87,7 @@ const ConversationListSidebar: React.FC = () => {
                 }}
                 mt={0.5}
               >
-                {conversation.conversationTitle}
+                {conversation.id}
               </Text>
             </HStack>
           ))}

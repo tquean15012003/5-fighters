@@ -16,7 +16,7 @@ import {
 } from "./components/Chat";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useConversation from "./hooks/useConversation";
-import FallbackPage from "../misc/misc";
+import FallbackPage from "../misc/FallbackPage";
 import useChatSubscription from "./hooks/useChatSubscription";
 import useInterval from "../../hooks/useInterval";
 import useIntersectionObserver from "../../hooks/useIntersectionObserver";

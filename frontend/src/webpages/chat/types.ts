@@ -1,6 +1,5 @@
 export type TConversation = {
-  conversationId: string;
-  conversationTitle: string;
+  id: string;
 };
 
 export interface IUserConversationMessage {
@@ -20,3 +19,9 @@ export type IConversationMessage =
   | IAIConversationMessage;
 
 export type ChatMode = "auto" | "manual";
+
+export type TResponseMessageMetaData = {
+  senderId: string;
+  conversationId: string;
+  message: string;
+};

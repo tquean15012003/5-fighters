@@ -1,4 +1,4 @@
-import { TRole } from "./types";
+import { TRole, TUser } from "./types";
 import { Panel, PanelBody, PanelContent } from "../../components/panel";
 
 import {
@@ -10,6 +10,9 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
+import { useNavigate } from "react-router-dom";
+import useSession from "./hooks/useSession";
+import EmptyChatPage from "../misc/EmptyChatPage";
 
 type TProps = {
   displayName: string;
@@ -17,30 +20,36 @@ type TProps = {
   onClick: () => void;
 };
 
-const PROFILES = [
+export const PROFILES: TUser[] = [
   {
     displayName: "Customer 1",
     role: "customer",
+    id: "JD1923",
   },
   {
     displayName: "Customer 2",
     role: "customer",
+    id: "ASH8675",
   },
   {
     displayName: "Customer 3",
     role: "customer",
+    id: "BLU554",
   },
   {
     displayName: "Customer 4",
     role: "customer",
+    id: "PRM2310",
   },
   {
     displayName: "Customer 5",
     role: "customer",
+    id: "GTW890",
   },
   {
     displayName: "Agent",
     role: "agent",
+    id: "LKM4602",
   },
 ];
 
@@ -69,15 +78,22 @@ const InfoCard = ({ displayName, role, onClick }: TProps) => {
 };
 
 const Profiles = () => {
-  const handleCardOnClick = (displayName: string, role: TRole) => {
-    localStorage.setItem(
-      "user-info",
-      JSON.stringify({
-        displayName,
-        role,
-      })
-    );
+  const navigate = useNavigate();
+  const { mutateAsync, isPending } = useSession();
+  const handleCardOnClick = async (user: TUser) => {
+    localStorage.setItem("user-info", JSON.stringify(user));
+    if (user.role === "customer") {
+      const conversationId = await mutateAsync(user.id);
+      navigate(`/chat/${conversationId}`);
+    } else {
+      navigate("/chat");
+    }
   };
+
+  if (isPending) {
+    return <EmptyChatPage />;
+  }
+
   return (
     <Panel>
       <PanelContent>
@@ -93,7 +109,9 @@ const Profiles = () => {
               borderRadius="md"
             >
               <Stack gap={0}>
-                <Text fontSize="4xl" fontWeight="bold">Welcome to 5 Fighters</Text>
+                <Text fontSize="4xl" fontWeight="bold">
+                  Welcome to 5 Fighters
+                </Text>
               </Stack>
             </HStack>
             <SimpleGrid
@@ -104,14 +122,16 @@ const Profiles = () => {
               columns={[1, null, 3]}
               spacing={4}
             >
-              {PROFILES.map(({ displayName, role }) => {
+              {PROFILES.map((user) => {
+                const { displayName, role, id } = user;
                 return (
                   <InfoCard
                     displayName={displayName}
                     role={role as TRole}
                     onClick={() => {
-                      handleCardOnClick(displayName, role as TRole);
+                      handleCardOnClick(user);
                     }}
+                    key={id}
                   />
                 );
               })}

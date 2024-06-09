@@ -1,28 +1,39 @@
 import { axiosClient } from "../../../lib/axios";
 import { useQuery } from "@tanstack/react-query";
 
-import { IConversationMessage } from "../types";
+import { IConversationMessage, TResponseMessageMetaData } from "../types";
+import { useAuthContext } from "../../auth/AuthContext";
 
-const CONVERSATION: IConversationMessage[] = [
-  {
-    role: "user",
-    content: "Hi",
-  },
-  {
-    role: "assistant",
-    content: "Hi. How can I help you?",
-  },
-];
+type TResponseGetConversationContent = {
+  message: string;
+  metadata: TResponseMessageMetaData[];
+};
+
+const transformData = (
+  data: TResponseMessageMetaData[],
+  currentUserId: string
+) => {
+  const transformed: IConversationMessage[] = [];
+  data.forEach((message) => {
+    transformed.push({
+      role: message.senderId === currentUserId ? "user" : "assistant",
+      content: message.message,
+    });
+  });
+  return transformed;
+};
 
 const useConversation = (id?: string) => {
+  const { authUser } = useAuthContext();
   return useQuery({
     queryKey: ["conversation", id],
     queryFn: async () => {
-      //   const { data } = await axiosClient.get<IConversationMessage[]>(
-      //     `/conversations/${id}`
-      //   );
+      const { data } = await axiosClient.post<TResponseGetConversationContent>(
+        `/getConversationContent/${id}`
+      );
+      const { metadata } = data;
 
-      return CONVERSATION;
+      return transformData(metadata, authUser.id);
     },
     enabled: !!id,
     staleTime: Infinity,
