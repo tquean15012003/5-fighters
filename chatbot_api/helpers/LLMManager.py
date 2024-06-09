@@ -11,6 +11,9 @@ from openai.types.beta.thread import Thread
 from helpers.ToolCalling import AVAILABLE_TOOLS
 from helpers.CustomAssistantEventHandler import EventHandler
 
+
+ALLOWED_MODELS = ["gpt-3.5-turbo", "gpt-4o"]
+
 Role = Literal["user", "assistant"]
 
 
@@ -57,7 +60,12 @@ class LLM:
         return all_messages.data[0].content[0].text.value
 
     def _load_assisstant(self, type: TSupportType):
-        assistant_params = {"model": os.getenv("OPENAI_MODEL")}
+        model = os.getenv("OPENAI_MODEL")
+        if model not in ALLOWED_MODELS:
+            raise ValueError(
+                f"Model is not allowed. Please set OPENAI_MODEL to {' or '.join(ALLOWED_MODELS)}"
+            )
+        assistant_params = {"model": model}
         if type == "after_chat":
             assistant_params.update(
                 {
