@@ -11,7 +11,7 @@ from openai.types.beta.thread import Thread
 from helpers.ToolCalling import AVAILABLE_TOOLS
 from helpers.CustomAssistantEventHandler import EventHandler
 
-
+ALLOWED_RUNNING_MODE = ["test", "real"]
 ALLOWED_MODELS = ["gpt-3.5-turbo", "gpt-4o"]
 
 Role = Literal["user", "assistant"]
@@ -31,14 +31,29 @@ TSupportType = Literal["after_chat", "auto_chat"]
 class LLM:
     def __init__(self, support_type: TSupportType):
         logger.info("assistant LLM initilize")
+        self._check_env()
         self.client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-        self.assistant = self._load_assisstant(support_type)
+        self.support_type: TSupportType = support_type
+        self.assistant = self._load_assisstant()
 
     def create_thread(self, messages: List[TMessage]) -> Thread:
         thread = self.client.beta.threads.create(messages=messages)
         return thread
 
     def generate_response(self, user_inquiry: str, thread: Thread) -> str:
+        if self.mode == "test":
+            if self.support_type == "auto_chat":
+                return ""
+            elif self.support_type == "after_chat":
+                return """
+                {
+                    "summary": "This is the summary",
+                    "tasks": ["Email the customer after finishing checking their account"]
+                }
+                """
+            else:
+                raise ValueError("Support Type is not supported")
+
         self.client.beta.threads.messages.create(
             role="user",
             content=user_inquiry,
@@ -59,14 +74,9 @@ class LLM:
         all_messages = self.client.beta.threads.messages.list(thread_id=thread.id)
         return all_messages.data[0].content[0].text.value
 
-    def _load_assisstant(self, type: TSupportType):
-        model = os.getenv("OPENAI_MODEL")
-        if model not in ALLOWED_MODELS:
-            raise ValueError(
-                f"Model is not allowed. Please set OPENAI_MODEL to {' or '.join(ALLOWED_MODELS)}"
-            )
-        assistant_params = {"model": model}
-        if type == "after_chat":
+    def _load_assisstant(self):
+        assistant_params = {"model": self.model}
+        if self.support_type == "after_chat":
             assistant_params.update(
                 {
                     "name": "After Chat Assistant",
@@ -77,7 +87,7 @@ summary: str
 tasks: [str]""",
                 }
             )
-        elif type == "auto_chat":
+        elif self.support_type == "auto_chat":
             assistant_params.update(
                 {
                     "name": "Auto Chat Assistant",
@@ -86,8 +96,25 @@ tasks: [str]""",
                 }
             )
         else:
-            raise ValueError("Type is not supported")
+            raise ValueError("Support Type is not supported")
         return self.client.beta.assistants.create(**assistant_params)
+
+    def _check_env(self):
+        # Check model name
+        model = os.getenv("OPENAI_MODEL").lower()
+        if model not in ALLOWED_MODELS:
+            raise ValueError(
+                f"Model is not allowed. Please set OPENAI_MODEL in .env to {' or '.join(ALLOWED_MODELS)}"
+            )
+        self.model = model
+
+        # Check running mode
+        mode = os.getenv("RUNNING_MODE").lower()
+        if mode not in ALLOWED_RUNNING_MODE:
+            raise ValueError(
+                f"Running mode is not allowed. Please set RUNNING_NODE in .env to {' or '.join(ALLOWED_RUNNING_MODE)}"
+            )
+        self.mode = mode
 
     def __del__(self):
         try:
