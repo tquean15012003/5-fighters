@@ -66,7 +66,7 @@ const useChatSubscription = (
         }
       );
       try {
-        await axiosClient.post(`/senMessage`, {
+        await axiosClient.post(`/sendMessage`, {
           senderId: authUser.id,
           messageContent: message,
           conversationId: conversationId,
