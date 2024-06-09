@@ -19,6 +19,6 @@ router.post(
   asyncHandler(chatController.getConversationContent)
 );
 
-router.post("/senMessage", asyncHandler(chatController.senMessage));
+router.post("/sendMessage", asyncHandler(chatController.sendMessage));
 
 export default router;
