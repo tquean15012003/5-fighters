@@ -1,8 +1,8 @@
 import logging
+
 from typing import List
 
-from api.ping.model import PingReponse
-from helpers.eventHandler import LLM, TMessage
+from helpers.LLMManager import LLM, TMessage
 
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,6 @@
 import logging
 
-from api.ping.model import PingReponse
+from api.ping.model import PingResponse
 
 logger = logging.getLogger(__name__)
 
@@ -10,4 +10,4 @@ class PingHandler:
         logger.info("PingHandler initialized")
 
     def handle_ping(self):
-        return PingReponse(message="pong")
+        return PingResponse(message="pong")

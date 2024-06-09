@@ -1,10 +1,9 @@
 import logging
-from typing import List
 
 from fastapi import APIRouter
-from api.chat.handler import ChatHandler
+
 from api.chat.model import ChatRequest
-from helpers.eventHandler import TMessage
+from api.chat.handler import ChatHandler
 
 
 logger = logging.getLogger(__name__)
@@ -23,6 +22,6 @@ class ChatRouter:
         return self.handler.handle_summarize(messages)
 
     def chat(self, body: ChatRequest):
-        messages = body.messages
         logger.info("Chat function called")
+        messages = body.messages
         return self.handler.handle_chat(messages)

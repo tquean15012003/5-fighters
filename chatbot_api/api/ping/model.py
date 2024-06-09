@@ -1,5 +1,5 @@
 from pydantic import BaseModel
 
 
-class PingReponse(BaseModel):
+class PingResponse(BaseModel):
     message: str
