@@ -39,7 +39,7 @@ export class chatController {
     }).send(res);
   };
 
-  static senMessage = async (
+  static sendMessage = async (
     req: Request,
     res: Response,
     next: NextFunction
