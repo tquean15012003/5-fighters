@@ -61,16 +61,19 @@ class LLM:
         if type == "after_chat":
             assistant_params.update(
                 {
-                    "name": "Summary helper",
-                    "instructions": "Summarize the chat content and generate the todo list based on its summary",
+                    "name": "After Chat Assistant",
+                    "instructions": """You will receive a chat between the customer and the sale agent. You are tasked to summary the and give the agent follow-up tasks in short phrases such as callback. Tasks can be empty if there is no follow-up action required.
+Response: summary: the chat summary, tasks: a list of task
+Response in JSON format
+summary: str
+tasks: [str]""",
                 }
             )
-
         elif type == "auto_chat":
-            assistant_params(
+            assistant_params.update(
                 {
-                    "name": "Auto-chat helper",
-                    "instructions": "Based on the chat content, generate the answer for customer's question",
+                    "name": "Auto Chat Assistant",
+                    "instructions": "You are tasked to answer the customer on the sale agent belf. Give the best answer based on the current interactiion. Use the suitable tools when necessary.",
                     "tools": AVAILABLE_TOOLS,
                 }
             )
@@ -79,7 +82,10 @@ class LLM:
         return self.client.beta.assistants.create(**assistant_params)
 
     def __del__(self):
-        self.client.beta.assistants.delete(assistant_id=self.assistant.id)
+        try:
+            self.client.beta.assistants.delete(assistant_id=self.assistant.id)
+        except Exception as err:
+            logger.error("Failed to delete assistant!")
 
 
 if __name__ == "__main__":

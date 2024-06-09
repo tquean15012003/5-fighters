@@ -10,4 +10,4 @@ class ChatRequest(BaseModel):
 
 class ChatSummaryResponse(BaseModel):
     summary: str
-    to_do_list: List[str]
+    tasks: List[str]
