@@ -2,12 +2,23 @@ import { BadRequestError } from "../core/error.response";
 import { chatModel } from "../dbs/init.mongodb";
 import { v4 as uuidv4 } from "uuid";
 import { getReceiverSocketId, io } from "../socket/socket";
+import axios from "axios";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 interface IConversation {
   id: string;
   name: string;
   participants: string[];
-  messages: string[];
+  messages: Message[];
+  autoMode: boolean;
+}
+
+interface Message {
+  senderId: string;
+  conversationId: string;
+  message: string;
 }
 
 class ChatService {
@@ -22,6 +33,7 @@ class ChatService {
       name: id,
       participants: chatMembers,
       messages: [],
+      autoMode: false,
     };
 
     const newConversation = await chatModel.saveConversation(conversation);
@@ -65,7 +77,7 @@ class ChatService {
     const conversation = await chatModel.getConversationById(conversationId);
     if (!conversation) throw new BadRequestError("Conversation not exist");
 
-    const newMessage = {
+    const newMessage: Message = {
       senderId: senderId,
       conversationId: conversationId,
       message: messageContent,
@@ -80,9 +92,68 @@ class ChatService {
         conversationId,
         newMessage,
       });
-      console.log(receiverSocketId, "receiverId", newMessage);
     }
     return newMessage;
+  }
+
+  static async summaryChat(conversationId: string) {
+    const conversation = await chatModel.getConversationById(conversationId);
+    if (!conversation || conversation.messages.length < 1)
+      throw new BadRequestError("Conversation not exist");
+
+    let messages: any = [];
+    await conversation.messages.forEach((chat: Message) => {
+      const obj = {
+        role: chat.senderId === "LKM4602" ? "assistant" : "user",
+        content: chat.message,
+      };
+      messages.push(obj);
+    });
+
+    const summaryContent = await axios.post(
+      `${process.env.CHATBOT_BASE_API_URL}/summary`,
+      {
+        messages: messages,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return summaryContent.data;
+  }
+
+  static async generateChat(conversationId: string) {
+    const conversation = await chatModel.getConversationById(conversationId);
+    if (!conversation) throw new BadRequestError("Conversation not exist");
+
+    // if (!conversation.autoMode)
+    //   throw new BadRequestError("AutoChat mode not available for this chat");
+
+    let messages: any = [];
+    await conversation.messages.forEach((chat: Message) => {
+      const obj = {
+        role: chat.senderId === "LKM4602" ? "assistant" : "user",
+        content: chat.message,
+      };
+      messages.push(obj);
+    });
+
+    const autoChat = await axios.post(
+      `${process.env.CHATBOT_BASE_API_URL}/generate`,
+      {
+        messages: messages,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return autoChat.data;
   }
 }
 

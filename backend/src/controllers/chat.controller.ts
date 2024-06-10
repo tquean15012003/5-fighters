@@ -4,7 +4,7 @@ import { Request, Response, NextFunction } from "express";
 import { CREATED, OK } from "../core/success.response";
 import ChatService from "../services/chat.service";
 
-export class chatController {
+export class ChatController {
   static createConversation = async (
     req: Request,
     res: Response,
@@ -47,6 +47,28 @@ export class chatController {
     new OK({
       message: "Succesfull send a new message",
       metadata: await ChatService.sendMessage({ ...req.body }),
+    }).send(res);
+  };
+
+  static summaryChat = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    new OK({
+      message: "Succesfull get summary chat content",
+      metadata: await ChatService.summaryChat(req?.params?.id),
+    }).send(res);
+  };
+
+  static generateChat = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    new OK({
+      message: "Succesfull generated chat content",
+      metadata: await ChatService.generateChat(req?.params?.id),
     }).send(res);
   };
 }

@@ -3,6 +3,7 @@ interface IConversation {
   name: string;
   participants: string[];
   messages: Message[];
+  autoMode: boolean;
 }
 
 interface Message {
