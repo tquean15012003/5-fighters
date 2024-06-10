@@ -43,7 +43,7 @@ class LLM:
     def generate_response(self, user_inquiry: str, thread: Thread) -> str:
         if self.mode == "test":
             if self.support_type == "auto_chat":
-                return ""
+                return "This is AI message!"
             elif self.support_type == "after_chat":
                 return """
                 {
