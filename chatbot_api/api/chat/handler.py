@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 class ChatHandler:
     def __init__(self):
-        logger.info("PingHandler initialized")
+        logger.info("ChatHandler initialized")
 
     def handle_summarize(self, messages: List[TMessage]):
         llm = LLM(support_type="after_chat")
