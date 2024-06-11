@@ -6,6 +6,7 @@ import cors from "cors";
 import { instanceMongodb } from "./dbs/init.mongodb";
 import routes from "./routes";
 import { ErrorResponse } from "./core/error.response";
+import morgan from "morgan";
 // import session from "express-session";
 // import { app } from "./socket/socket";
 dotenv.config();
@@ -21,6 +22,7 @@ app.use(
 app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(morgan('combined'))
 
 // app.use(
 //   session({
