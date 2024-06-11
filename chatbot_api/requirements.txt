@@ -6,3 +6,6 @@ openai
 langchain
 langchain_openai
 python-dotenv
+
+beautifulsoup4==4.12.2
+lxml
