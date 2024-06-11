@@ -1,35 +1,30 @@
 import logging
+from tools.google_search.search_tool import search_google
 
 logging.basicConfig(level=logging.INFO, force=True)
 logger = logging.getLogger(__name__)
 
 AVAILABLE_TOOLS = [
-    # {"type": "code_interpreter"},
     {
         "type": "function",
         "function": {
-            "name": "getCurrentWeather",
-            "description": "Get the weather in location",
+            "name": "search_google",
+            "description": "Get information from google",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "location": {
+                    "query": {
                         "type": "string",
-                        "description": "The city and state e.g. San Francisco, CA",
+                        "description": "Query want to search on Google",
                     },
                 },
-                "required": ["location"],
+                "required": ["query"],
             },
         },
     },
 ]
 
 
-def getCurrentWeather(location: str):
-    logger.info(f"__getCurrentWeather called with parameters: location: {location}")
-    return "The weather is 75 degrees"
-
-
 FUNCTION_MAP = {
-    "getCurrentWeather": getCurrentWeather,
+    "search_google": search_google,
 }
