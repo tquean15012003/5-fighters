@@ -106,7 +106,7 @@ const ChatPage = () => {
           messages={filteredConversations}
           isLoading={isLoading}
           isReceivingMessages={isReceivingMessage}
-          chatMode={autoMode ? "manual" : "auto"}
+          chatMode={autoMode ? "auto" : "manual"}
         >
           <PanelBody>
             <Stack spacing={4} overflow="auto" flexGrow={1}>
