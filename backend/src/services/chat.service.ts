@@ -62,7 +62,12 @@ class ChatService {
     );
     if (!selectedConversation)
       throw new BadRequestError("Conversation not exist");
-    return selectedConversation.messages ?? [];
+
+    const conversationContent = {
+      messages: selectedConversation.messages ?? [],
+      autoMode: selectedConversation.autoMode,
+    };
+    return conversationContent;
   }
 
   static async sendMessage({
