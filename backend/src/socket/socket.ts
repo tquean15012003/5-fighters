@@ -54,15 +54,15 @@ io.on("connection", (socket) => {
           conversationId: conversationId,
           messageContent: msg,
         });
-        if (userId != "LKM4602") {
-          const generateMessage = await ChatService.generateChat(
-            conversationId
-          );
-          socket.to(userSocketMap["LKM4602"]).emit("suggestMessage", {
-            conversationId,
-            generateMessage,
-          });
-        }
+        // if (userId != "LKM4602") {
+        //   const generateMessage = await ChatService.generateChat(
+        //     conversationId
+        //   );
+        //   socket.to(userSocketMap["LKM4602"]).emit("suggestMessage", {
+        //     conversationId,
+        //     generateMessage,
+        //   });
+        // }
       }
     }
   );
