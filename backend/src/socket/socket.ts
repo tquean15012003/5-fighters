@@ -31,6 +31,7 @@ io.on("connection", (socket) => {
       conversationId: string;
       msg: string;
     }) => {
+      console.log("Here", conversationId)
       const conversation = chatModel.getConversationById(conversationId);
       if (conversation) {
         if (conversation.autoMode && userId != "LKM4602") {
@@ -47,22 +48,22 @@ io.on("connection", (socket) => {
             conversationId: conversationId,
             messageContent: generateMessage,
           });
+        } else {
+          await ChatService.sendMessage({
+            senderId: userId,
+            conversationId: conversationId,
+            messageContent: msg,
+          });
+          // if (userId != "LKM4602") {
+          //   const generateMessage = await ChatService.generateChat(
+          //     conversationId
+          //   );
+          //   socket.to(userSocketMap["LKM4602"]).emit("suggestMessage", {
+          //     conversationId,
+          //     generateMessage,
+          //   });
+          // }
         }
-      } else {
-        await ChatService.sendMessage({
-          senderId: userId,
-          conversationId: conversationId,
-          messageContent: msg,
-        });
-        // if (userId != "LKM4602") {
-        //   const generateMessage = await ChatService.generateChat(
-        //     conversationId
-        //   );
-        //   socket.to(userSocketMap["LKM4602"]).emit("suggestMessage", {
-        //     conversationId,
-        //     generateMessage,
-        //   });
-        // }
       }
     }
   );
