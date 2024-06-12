@@ -5,7 +5,10 @@ pydantic
 openai
 langchain
 langchain_openai
+langchain-community
 python-dotenv
 
+chromadb
 beautifulsoup4==4.12.2
 lxml
+google-generativeai

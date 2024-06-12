@@ -3,7 +3,7 @@ import time
 from tools.google_search.serper_client import SerperClient
 from tools.google_search.web_crawler import WebCrawler
 
-class WebContentSearcher:
+class WebContentCrawler:
     def __init__(self, query):
         # Initialize the fetcher with a search query
         self.query = query
@@ -75,7 +75,9 @@ class WebContentSearcher:
 
 # Example usage
 if __name__ == "__main__":
-    fetcher = WebContentSearcher("What happened to Silicon Valley Bank")
+    from dotenv import load_dotenv
+    load_dotenv()
+    fetcher = WebContentCrawler("What happened to Silicon Valley Bank")
     contents, serper_response = fetcher.fetch()
 
     print(serper_response)
