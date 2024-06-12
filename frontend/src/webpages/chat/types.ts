@@ -25,3 +25,8 @@ export type TResponseMessageMetaData = {
   conversationId: string;
   message: string;
 };
+
+export type TSummaryResponse = {
+  summary: string;
+  tasks: string[];
+};

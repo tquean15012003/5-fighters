@@ -1,11 +1,14 @@
 import { useToast } from "@chakra-ui/react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useContext, useEffect, useMemo } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 
-import { IConversationMessage, TResponseMessageMetaData } from "../types";
+import {
+  IConversationMessage,
+  TResponseMessageMetaData,
+  TSummaryResponse,
+} from "../types";
 import { ChatSubscriptionContext } from "../providers/ChatSubscriptionProvider";
 import { axiosClient } from "../../../lib/axios";
-import { useAuthContext } from "../../auth/AuthContext";
 
 const useChatSubscription = (
   params: { id: string },
@@ -17,9 +20,8 @@ const useChatSubscription = (
   const { onMessageSent, onMessageEnd } = options;
   const toast = useToast();
   const queryClient = useQueryClient();
-  const { authUser } = useAuthContext();
   const socket = useContext(ChatSubscriptionContext);
-
+  const [isLoadingSummary, setIsLoadingSummary] = useState(false);
   useEffect(() => {
     socket?.on(
       "newMessage",
@@ -30,18 +32,22 @@ const useChatSubscription = (
         conversationId: string;
         newMessage: TResponseMessageMetaData;
       }) => {
-        queryClient.setQueryData<IConversationMessage[]>(
-          ["conversation", conversationId],
-          (oldData) => {
-            return [
-              ...(oldData || []),
+        console.log(newMessage);
+        queryClient.setQueryData<{
+          conversation: IConversationMessage[];
+          autoMode: boolean;
+        }>(["conversation", conversationId], (oldData) => {
+          return {
+            autoMode: oldData?.autoMode ?? false,
+            conversation: [
+              ...(oldData?.conversation || []),
               {
                 role: "assistant",
                 content: newMessage.message,
               },
-            ];
-          }
-        );
+            ],
+          };
+        });
         onMessageEnd?.();
       }
     );
@@ -53,43 +59,66 @@ const useChatSubscription = (
   const sendMessage = useCallback(
     async (message: string) => {
       const conversationId = params.id;
-      queryClient.setQueryData<IConversationMessage[]>(
-        ["conversation", conversationId],
-        (oldData) => {
-          return [
-            ...(oldData || []),
+      queryClient.setQueryData<{
+        conversation: IConversationMessage[];
+        autoMode: boolean;
+      }>(["conversation", conversationId], (oldData) => {
+        return {
+          autoMode: oldData?.autoMode ?? false,
+          conversation: [
+            ...(oldData?.conversation || []),
             {
               role: "user",
               content: message,
             },
-          ];
-        }
-      );
-      try {
-        await axiosClient.post(`/sendMessage`, {
-          senderId: authUser.id,
-          messageContent: message,
-          conversationId: conversationId,
-        });
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Something went wrong! Please send again!",
-          status: "error",
-          isClosable: true,
-        });
-      }
+          ],
+        };
+      });
+      socket.emit("newMessage", {
+        conversationId,
+        msg: message,
+      });
       onMessageSent?.();
     },
-    [authUser.id, onMessageSent, params.id, queryClient, toast]
+    [onMessageSent, params.id, queryClient, socket]
   );
+
+  const endChat = useCallback(async () => {
+    const conversationId = params.id;
+    setIsLoadingSummary(true);
+    try {
+      const { data } = await axiosClient.post(`/summaryChat/${params.id}`);
+      const { metadata } = data;
+      const { summary, tasks } = metadata;
+      queryClient.setQueryData<TSummaryResponse>(
+        ["summary", conversationId],
+        () => {
+          return {
+            summary,
+            tasks,
+          };
+        }
+      );
+      setIsLoadingSummary(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Something went wrong! Please send again!",
+        status: "error",
+        isClosable: true,
+      });
+      setIsLoadingSummary(false);
+    }
+  }, [params.id, queryClient, toast]);
 
   return useMemo(
     () => ({
       sendMessage,
       isReceivingMessage: false,
+      endChat,
+      isLoadingSummary,
     }),
-    [sendMessage]
+    [endChat, isLoadingSummary, sendMessage]
   );
 };
 

@@ -6,7 +6,10 @@ import { useAuthContext } from "../../auth/AuthContext";
 
 type TResponseGetConversationContent = {
   message: string;
-  metadata: TResponseMessageMetaData[];
+  metadata: {
+    messages: TResponseMessageMetaData[];
+    autoMode: boolean;
+  };
 };
 
 const transformData = (
@@ -32,8 +35,8 @@ const useConversation = (id?: string) => {
         `/getConversationContent/${id}`
       );
       const { metadata } = data;
-
-      return transformData(metadata, authUser.id);
+      const { messages, autoMode } = metadata;
+      return { conversation: transformData(messages, authUser.id), autoMode };
     },
     enabled: !!id,
     staleTime: Infinity,

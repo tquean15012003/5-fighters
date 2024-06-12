@@ -20,6 +20,9 @@ import FallbackPage from "../misc/FallbackPage";
 import useChatSubscription from "./hooks/useChatSubscription";
 import useInterval from "../../hooks/useInterval";
 import useIntersectionObserver from "../../hooks/useIntersectionObserver";
+import { AgentActionListSideBar } from "./components/AgentActionListSideBar";
+import useSummary from "./hooks/useSummary";
+import { AfterChatModel } from "./components/AfterChatModel";
 
 const ChatPage = () => {
   const { id } = useParams();
@@ -30,12 +33,29 @@ const ChatPage = () => {
     rootMargin: "-80px",
   });
   const {
-    data: conversation,
+    data: conversationData,
     isLoading: isLoadingConversation,
     error: conversationError,
   } = useConversation(id);
+  const { resetSummary, summaryQuery } = useSummary(id);
+  const { data: summaryAndTasks, error: summaryError } = summaryQuery;
+  const isOpen =
+    summaryAndTasks?.summary.length !== 0 ||
+    summaryAndTasks?.tasks.length !== 0;
 
-  const isLoading = isLoadingConversation;
+  const { conversation, autoMode } = conversationData ?? {};
+  const { sendMessage, endChat, isReceivingMessage, isLoadingSummary } =
+    useChatSubscription(
+      {
+        id: id || "",
+      },
+      {
+        onMessageSent: () => scrollToBottom(),
+        onMessageEnd: () => scrollToBottom(),
+      }
+    );
+
+  const isLoading = isLoadingConversation || isLoadingSummary;
 
   const scrollToBottom = useCallback(
     (behavior: ScrollBehavior = "smooth") => {
@@ -44,16 +64,6 @@ const ChatPage = () => {
       }
     },
     [isLoading]
-  );
-
-  const { sendMessage, isReceivingMessage } = useChatSubscription(
-    {
-      id: id || "",
-    },
-    {
-      onMessageSent: () => scrollToBottom(),
-      onMessageEnd: () => scrollToBottom(),
-    }
   );
 
   useEffect(() => {
@@ -80,7 +90,7 @@ const ChatPage = () => {
       }));
   }, [conversation]);
 
-  if (conversationError) {
+  if (conversationError || summaryError) {
     return (
       <FallbackPage
         message={`An error occured while fetching the conversation details. Please try again later or contact support.`}
@@ -96,7 +106,7 @@ const ChatPage = () => {
           messages={filteredConversations}
           isLoading={isLoading}
           isReceivingMessages={isReceivingMessage}
-          chatMode="manual"
+          chatMode={autoMode ? "manual" : "auto"}
         >
           <PanelBody>
             <Stack spacing={4} overflow="auto" flexGrow={1}>
@@ -148,6 +158,16 @@ const ChatPage = () => {
                   sendMessage(message);
                   setMessage("");
                 }}
+              />
+              <AgentActionListSideBar
+                isLoading={isLoadingSummary}
+                handleEndChat={endChat}
+              />
+              <AfterChatModel
+                summary={summaryAndTasks?.summary ?? ""}
+                tasks={summaryAndTasks?.tasks ?? []}
+                onCloseModal={resetSummary}
+                isOpen={isOpen}
               />
             </HStack>
           </PanelFooter>
