@@ -32,7 +32,6 @@ const useChatSubscription = (
         conversationId: string;
         newMessage: TResponseMessageMetaData;
       }) => {
-        console.log(newMessage);
         queryClient.setQueryData<{
           conversation: IConversationMessage[];
           autoMode: boolean;
@@ -83,6 +82,28 @@ const useChatSubscription = (
     [onMessageSent, params.id, queryClient, socket]
   );
 
+  const toggleAutoChat = useCallback(
+    async () => {
+      const conversationId = params.id;
+      let autoChat = false;
+      queryClient.setQueryData<{
+        conversation: IConversationMessage[];
+        autoMode: boolean;
+      }>(["conversation", conversationId], (oldData) => {
+        autoChat = !oldData?.autoMode;
+        return {
+          conversation: oldData?.conversation ?? [],
+          autoMode: autoChat,
+        };
+      });
+      socket.emit("toggleAutoChat", {
+        conversationId,
+        autoChat,
+      });
+    },
+    [params.id, queryClient, socket]
+  );
+
   const endChat = useCallback(async () => {
     const conversationId = params.id;
     setIsLoadingSummary(true);
@@ -117,8 +138,9 @@ const useChatSubscription = (
       isReceivingMessage: false,
       endChat,
       isLoadingSummary,
+      toggleAutoChat,
     }),
-    [endChat, isLoadingSummary, sendMessage]
+    [endChat, isLoadingSummary, sendMessage, toggleAutoChat]
   );
 };
 

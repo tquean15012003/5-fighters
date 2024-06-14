@@ -44,16 +44,21 @@ const ChatPage = () => {
     summaryAndTasks?.tasks.length !== 0;
 
   const { conversation, autoMode } = conversationData ?? {};
-  const { sendMessage, endChat, isReceivingMessage, isLoadingSummary } =
-    useChatSubscription(
-      {
-        id: id || "",
-      },
-      {
-        onMessageSent: () => scrollToBottom(),
-        onMessageEnd: () => scrollToBottom(),
-      }
-    );
+  const {
+    sendMessage,
+    endChat,
+    isReceivingMessage,
+    isLoadingSummary,
+    toggleAutoChat,
+  } = useChatSubscription(
+    {
+      id: id || "",
+    },
+    {
+      onMessageSent: () => scrollToBottom(),
+      onMessageEnd: () => scrollToBottom(),
+    }
+  );
 
   const isLoading = isLoadingConversation || isLoadingSummary;
 
@@ -162,6 +167,7 @@ const ChatPage = () => {
               <AgentActionListSideBar
                 isLoading={isLoadingSummary}
                 handleEndChat={endChat}
+                handleAutoChat={toggleAutoChat}
               />
               <AfterChatModel
                 summary={summaryAndTasks?.summary ?? ""}
