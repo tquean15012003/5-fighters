@@ -27,9 +27,11 @@ const useChatSubscription = (
       "newMessage",
       ({
         conversationId,
+        senderId,
         newMessage,
       }: {
         conversationId: string;
+        senderId: string;
         newMessage: TResponseMessageMetaData;
       }) => {
         queryClient.setQueryData<{
@@ -41,7 +43,10 @@ const useChatSubscription = (
             conversation: [
               ...(oldData?.conversation || []),
               {
-                role: "assistant",
+                role:
+                  oldData?.autoMode == true && senderId === "LKM4602_BOT"
+                    ? "user"
+                    : "assistant",
                 content: newMessage.message,
               },
             ],
@@ -82,27 +87,24 @@ const useChatSubscription = (
     [onMessageSent, params.id, queryClient, socket]
   );
 
-  const toggleAutoChat = useCallback(
-    async () => {
-      const conversationId = params.id;
-      let autoChat = false;
-      queryClient.setQueryData<{
-        conversation: IConversationMessage[];
-        autoMode: boolean;
-      }>(["conversation", conversationId], (oldData) => {
-        autoChat = !oldData?.autoMode;
-        return {
-          conversation: oldData?.conversation ?? [],
-          autoMode: autoChat,
-        };
-      });
-      socket.emit("toggleAutoChat", {
-        conversationId,
-        autoChat,
-      });
-    },
-    [params.id, queryClient, socket]
-  );
+  const toggleAutoChat = useCallback(async () => {
+    const conversationId = params.id;
+    let autoChat = false;
+    queryClient.setQueryData<{
+      conversation: IConversationMessage[];
+      autoMode: boolean;
+    }>(["conversation", conversationId], (oldData) => {
+      autoChat = !oldData?.autoMode;
+      return {
+        conversation: oldData?.conversation ?? [],
+        autoMode: autoChat,
+      };
+    });
+    socket.emit("toggleAutoChat", {
+      conversationId,
+      autoChat,
+    });
+  }, [params.id, queryClient, socket]);
 
   const endChat = useCallback(async () => {
     const conversationId = params.id;

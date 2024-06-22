@@ -83,7 +83,7 @@ class ChatService {
     if (!conversation) throw new BadRequestError("Conversation not exist");
 
     const newMessage: Message = {
-      senderId: senderId,
+      senderId: senderId === "LKM4602_BOT" ? "LKM4602" : senderId,
       conversationId: conversationId,
       message: messageContent,
     };
@@ -91,10 +91,15 @@ class ChatService {
     await chatModel.saveMessage(conversationId, newMessage);
 
     for (let i of conversation.participants) {
-      if (i == senderId) continue;
+      if (senderId !== "LKM4602_BOT" && i == senderId) {
+        continue;
+      }
+
       const receiverSocketId = getReceiverSocketId(i);
+
       io.to(receiverSocketId).emit("newMessage", {
         conversationId,
+        senderId,
         newMessage,
       });
     }

@@ -31,8 +31,8 @@ io.on("connection", (socket) => {
       conversationId: string;
       msg: string;
     }) => {
-      console.log("Here", conversationId)
       const conversation = chatModel.getConversationById(conversationId);
+
       if (conversation) {
         if (conversation.autoMode && userId != "LKM4602") {
           await ChatService.sendMessage({
@@ -40,11 +40,13 @@ io.on("connection", (socket) => {
             conversationId: conversationId,
             messageContent: msg,
           });
+
           const generateMessage = await ChatService.generateChat(
             conversationId
           );
+
           await ChatService.sendMessage({
-            senderId: "LKM4602",
+            senderId: "LKM4602_BOT",
             conversationId: conversationId,
             messageContent: generateMessage,
           });
@@ -78,6 +80,7 @@ io.on("connection", (socket) => {
       autoChat: boolean;
     }) => {
       const conversation = chatModel.getConversationById(conversationId);
+
       if (conversation) {
         conversation.autoMode = autoChat;
       }
