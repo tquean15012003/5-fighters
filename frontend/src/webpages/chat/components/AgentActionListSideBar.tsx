@@ -37,7 +37,8 @@ export const AgentActionListSideBar = ({
   if (authUser.role === "customer") {
     return null;
   }
-  console.log(isLoadingSummary);
+  const isLoading = isLoadingSummary || isGeneratingAIChat
+
   return (
     <>
       <Button ref={btnRef} colorScheme="purple" onClick={onOpen}>
@@ -47,7 +48,7 @@ export const AgentActionListSideBar = ({
         isOpen={isOpen}
         placement="right"
         onClose={() => {
-          if (!isLoadingSummary && !isGeneratingAIChat) {
+          if (!isLoading) {
             onClose();
           }
         }}
@@ -55,7 +56,7 @@ export const AgentActionListSideBar = ({
       >
         <DrawerOverlay />
         <DrawerContent>
-          <DrawerCloseButton disabled={isLoadingSummary || isGeneratingAIChat} />
+          <DrawerCloseButton disabled={isLoading} />
           <DrawerHeader>Assistant Tools</DrawerHeader>
 
           <DrawerBody>
