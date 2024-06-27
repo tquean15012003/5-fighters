@@ -144,15 +144,13 @@ const useChatSubscription = (
       const { metadata } = data;
       const generatedMessage = metadata;
 
-      queryClient.setQueryData<{
-        generatedResponseMessage: IAIConversationMessage;
-      }>(["generatedResponseMessage", conversationId], () => {
+      queryClient.setQueryData<
+        IAIConversationMessage
+      >(["generatedResponseMessage", conversationId], () => {
         return {
-          generatedResponseMessage: {
-            role: "assistant",
-            content: generatedMessage,
-            isPending: true,
-          }
+          role: "assistant",
+          content: generatedMessage,
+          isPending: true,
         };
       });
     } catch (error) {

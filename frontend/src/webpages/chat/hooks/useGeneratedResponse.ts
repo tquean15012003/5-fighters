@@ -8,9 +8,7 @@ const useGeneratedResponse = (conversationId?: string) => {
   const socket = useContext(ChatSubscriptionContext);
 
   const sentGeneratedResponse = () => {
-    const AIResponseMessage: {
-      generatedResponseMessage: IAIConversationMessage
-    } | undefined = queryClient.getQueryData(
+    const AIResponseMessage: IAIConversationMessage | undefined = queryClient.getQueryData(
         ["generatedResponseMessage",  conversationId]
     )
 
@@ -24,7 +22,7 @@ const useGeneratedResponse = (conversationId?: string) => {
           ...(oldData?.conversation || []),
           {
             role: "assistant",
-            content: AIResponseMessage?.generatedResponseMessage.content ?? "",
+            content: AIResponseMessage?.content ?? "",
           },
         ],
       };
@@ -32,18 +30,16 @@ const useGeneratedResponse = (conversationId?: string) => {
 
     socket.emit("newMessage", {
       conversationId,
-      msg: AIResponseMessage?.generatedResponseMessage.content ?? "",
+      msg: AIResponseMessage?.content ?? "",
     })
 
-    queryClient.setQueryData<{
-      generatedResponseMessage: IAIConversationMessage;
-    }> (["generatedResponseMessage", conversationId], () => {
+    queryClient.setQueryData<
+        IAIConversationMessage
+    >(["generatedResponseMessage", conversationId], () => {
       return {
-        generatedResponseMessage: {
-          role: "assistant",
-          content: "",
-          isPending: false,
-        }
+        role: "assistant",
+        content: "",
+        isPending: false,
       };
     });
   };
@@ -53,12 +49,11 @@ const useGeneratedResponse = (conversationId?: string) => {
     generatedResponseQuery: useQuery({
       queryKey: ["generatedResponseMessage", conversationId],
       queryFn: async () => {
-        const generatedResponseMessage: IAIConversationMessage = {
+        return {
           role: "assistant",
           content: "",
           isPending: false,
         };
-        return { generatedResponseMessage };
       },
       enabled: !!conversationId,
       staleTime: Infinity,

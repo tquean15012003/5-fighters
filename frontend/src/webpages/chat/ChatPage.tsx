@@ -48,7 +48,7 @@ const ChatPage = () => {
 
   const { sentGeneratedResponse, generatedResponseQuery } = useGeneratedResponse(id)
   const { data: generatedResponseMessage, error: generatedResponseMessageError } = generatedResponseQuery;
-  const isGeneratedModelOpen = generatedResponseMessage?.generatedResponseMessage.content.length !== 0;
+  const isGeneratedModelOpen = generatedResponseMessage?.content.length !== 0;
 
   const { conversation, autoMode } = conversationData ?? {};
   const {
@@ -180,7 +180,7 @@ const ChatPage = () => {
                 handleAutoChat={toggleAutoChat}
                 handleGenerateResponse={generateResponse}/>
               <GeneratedResponseModel
-                generatedResponseMessage={generatedResponseMessage?.generatedResponseMessage?.content ?? ""}
+                generatedResponseMessage={generatedResponseMessage?.content ?? ""}
                 onCloseModal={sentGeneratedResponse}
                 isOpen={isGeneratedModelOpen}
               />
