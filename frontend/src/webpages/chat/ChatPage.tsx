@@ -69,7 +69,7 @@ const ChatPage = () => {
     }
   );
 
-  const isLoading = isLoadingConversation || isLoadingSummary;
+  const isLoading = isLoadingConversation || isLoadingSummary || isGeneratingAIChat;
 
   const scrollToBottom = useCallback(
     (behavior: ScrollBehavior = "smooth") => {
