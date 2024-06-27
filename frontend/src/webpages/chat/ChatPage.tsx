@@ -46,7 +46,7 @@ const ChatPage = () => {
     summaryAndTasks?.summary.length !== 0 ||
     summaryAndTasks?.tasks.length !== 0;
 
-  const { onSentGeneratedResponse, generatedResponseQuery } = useGeneratedResponse(id)
+  const { sentGeneratedResponse, generatedResponseQuery } = useGeneratedResponse(id)
   const { data: generatedResponseMessage, error: generatedResponseMessageError } = generatedResponseQuery;
   const isGeneratedModelOpen = generatedResponseMessage?.generatedResponseMessage.content.length !== 0;
 
@@ -181,7 +181,7 @@ const ChatPage = () => {
                 handleGenerateResponse={generateResponse}/>
               <GeneratedResponseModel
                 generatedResponseMessage={generatedResponseMessage?.generatedResponseMessage?.content ?? ""}
-                onCloseModal={onSentGeneratedResponse}
+                onCloseModal={sentGeneratedResponse}
                 isOpen={isGeneratedModelOpen}
               />
               <AfterEndChatModel

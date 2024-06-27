@@ -7,7 +7,7 @@ const useGeneratedResponse = (conversationId?: string) => {
   const queryClient = useQueryClient();
   const socket = useContext(ChatSubscriptionContext);
 
-  const onSentGeneratedResponse = () => {
+  const sentGeneratedResponse = () => {
     const AIResponseMessage: {
       generatedResponseMessage: IAIConversationMessage
     } | undefined = queryClient.getQueryData(
@@ -49,7 +49,7 @@ const useGeneratedResponse = (conversationId?: string) => {
   };
 
   return {
-    onSentGeneratedResponse,
+    sentGeneratedResponse: sentGeneratedResponse,
     generatedResponseQuery: useQuery({
       queryKey: ["generatedResponseMessage", conversationId],
       queryFn: async () => {
