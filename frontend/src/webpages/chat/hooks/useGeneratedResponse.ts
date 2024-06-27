@@ -21,7 +21,7 @@ const useGeneratedResponse = (conversationId?: string) => {
         conversation: [
           ...(oldData?.conversation || []),
           {
-            role: "assistant",
+            role: "user",
             content: AIResponseMessage?.content ?? "",
           },
         ],
@@ -37,7 +37,7 @@ const useGeneratedResponse = (conversationId?: string) => {
         IAIConversationMessage
     >(["generatedResponseMessage", conversationId], () => {
       return {
-        role: "assistant",
+        role: "user",
         content: "",
         isPending: false,
       };
