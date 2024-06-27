@@ -19,7 +19,7 @@ type TProps = {
   isOpen: boolean;
   onCloseModal: () => void;
 };
-export const AfterChatModel = ({
+export const AfterEndChatModel = ({
   onCloseModal,
   summary,
   tasks,

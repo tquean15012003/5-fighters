@@ -16,13 +16,15 @@ import { useAuthContext } from "../../auth/AuthContext";
 import useChatComponent from "./hooks/useChatComponent";
 
 type TProps = {
-  isLoading: boolean;
+  isLoadingSummary: boolean;
+  isGeneratingAIChat: boolean;
   handleGenerateResponse: () => void;
   handleAutoChat: () => void;
   handleEndChat: () => void;
 };
 export const AgentActionListSideBar = ({
-  isLoading,
+  isLoadingSummary,
+  isGeneratingAIChat,
   handleGenerateResponse,
   handleAutoChat,
   handleEndChat,
@@ -35,7 +37,7 @@ export const AgentActionListSideBar = ({
   if (authUser.role === "customer") {
     return null;
   }
-  console.log(isLoading);
+  console.log(isLoadingSummary);
   return (
     <>
       <Button ref={btnRef} colorScheme="purple" onClick={onOpen}>
@@ -45,7 +47,7 @@ export const AgentActionListSideBar = ({
         isOpen={isOpen}
         placement="right"
         onClose={() => {
-          if (!isLoading) {
+          if (!isLoadingSummary && !isGeneratingAIChat) {
             onClose();
           }
         }}
@@ -53,7 +55,7 @@ export const AgentActionListSideBar = ({
       >
         <DrawerOverlay />
         <DrawerContent>
-          <DrawerCloseButton disabled={isLoading} />
+          <DrawerCloseButton disabled={isLoadingSummary || isGeneratingAIChat} />
           <DrawerHeader>Assistant Tools</DrawerHeader>
 
           <DrawerBody>
@@ -69,28 +71,29 @@ export const AgentActionListSideBar = ({
                 _hover={{
                   bg: "red.500",
                 }}
-                disabled={isLoading}
+                disabled={isGeneratingAIChat}
                 onClick={handleGenerateResponse}
               >
                 Generate response
+                {isGeneratingAIChat && <Spinner />}
               </Button>
               <Button
                 colorScheme="blue"
                 _active={{
                   bg: "orange.500",
                 }}
-                disabled={isLoading}
+                disabled={isLoadingSummary}
                 onClick={handleAutoChat}
               >
                 {chatMode === "manual" ? "Auto Chat" : "Manual Chat"}
               </Button>
               <Button
                 colorScheme="red"
-                disabled={isLoading}
+                disabled={isLoadingSummary}
                 onClick={handleEndChat}
               >
                 End chat
-                {isLoading && <Spinner />}
+                {isLoadingSummary && <Spinner />}
               </Button>
             </Flex>
           </DrawerBody>
@@ -99,7 +102,7 @@ export const AgentActionListSideBar = ({
             <Button
               colorScheme="red"
               mr={3}
-              disabled={isLoading}
+              disabled={isLoadingSummary}
               onClick={onClose}
             >
               Cancel

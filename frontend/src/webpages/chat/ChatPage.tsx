@@ -22,7 +22,9 @@ import useInterval from "../../hooks/useInterval";
 import useIntersectionObserver from "../../hooks/useIntersectionObserver";
 import { AgentActionListSideBar } from "./components/AgentActionListSideBar";
 import useSummary from "./hooks/useSummary";
-import { AfterChatModel } from "./components/AfterChatModel";
+import { AfterEndChatModel } from "./components/AfterEndChatModel.tsx";
+import useGeneratedResponse from "./hooks/useGeneratedResponse.ts";
+import { GeneratedResponseModel } from "./components/GeneratedResponseModel.tsx";
 
 const ChatPage = () => {
   const { id } = useParams();
@@ -37,11 +39,16 @@ const ChatPage = () => {
     isLoading: isLoadingConversation,
     error: conversationError,
   } = useConversation(id);
+
   const { resetSummary, summaryQuery } = useSummary(id);
   const { data: summaryAndTasks, error: summaryError } = summaryQuery;
-  const isOpen =
+  const isSummaryModelOpen =
     summaryAndTasks?.summary.length !== 0 ||
     summaryAndTasks?.tasks.length !== 0;
+
+  const { onSentGeneratedResponse, generatedResponseQuery } = useGeneratedResponse(id)
+  const { data: generatedResponseMessage, error: generatedResponseMessageError } = generatedResponseQuery;
+  const isGeneratedModelOpen = generatedResponseMessage?.generatedResponseMessage.content.length !== 0;
 
   const { conversation, autoMode } = conversationData ?? {};
   const {
@@ -49,7 +56,9 @@ const ChatPage = () => {
     endChat,
     isReceivingMessage,
     isLoadingSummary,
+    isGeneratingAIChat,
     toggleAutoChat,
+    generateResponse,
   } = useChatSubscription(
     {
       id: id || "",
@@ -95,7 +104,7 @@ const ChatPage = () => {
       }));
   }, [conversation]);
 
-  if (conversationError || summaryError) {
+  if (conversationError || summaryError || generatedResponseMessageError) {
     return (
       <FallbackPage
         message={`An error occured while fetching the conversation details. Please try again later or contact support.`}
@@ -165,15 +174,21 @@ const ChatPage = () => {
                 }}
               />
               <AgentActionListSideBar
-                isLoading={isLoadingSummary}
+                isLoadingSummary={isLoadingSummary}
+                isGeneratingAIChat={isGeneratingAIChat}
                 handleEndChat={endChat}
                 handleAutoChat={toggleAutoChat}
+                handleGenerateResponse={generateResponse}/>
+              <GeneratedResponseModel
+                generatedResponseMessage={generatedResponseMessage?.generatedResponseMessage?.content ?? ""}
+                onCloseModal={onSentGeneratedResponse}
+                isOpen={isGeneratedModelOpen}
               />
-              <AfterChatModel
+              <AfterEndChatModel
                 summary={summaryAndTasks?.summary ?? ""}
                 tasks={summaryAndTasks?.tasks ?? []}
                 onCloseModal={resetSummary}
-                isOpen={isOpen}
+                isOpen={isSummaryModelOpen}
               />
             </HStack>
           </PanelFooter>

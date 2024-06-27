@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 import {
+  IAIConversationMessage,
   IConversationMessage,
   TResponseMessageMetaData,
   TSummaryResponse,
@@ -22,6 +23,7 @@ const useChatSubscription = (
   const queryClient = useQueryClient();
   const socket = useContext(ChatSubscriptionContext);
   const [isLoadingSummary, setIsLoadingSummary] = useState(false);
+  const [isGeneratingAIChat, setIsGeneratingAIChat] = useState(false)
   useEffect(() => {
     socket?.on(
       "newMessage",
@@ -44,7 +46,7 @@ const useChatSubscription = (
               ...(oldData?.conversation || []),
               {
                 role:
-                  oldData?.autoMode == true && senderId === "LKM4602_BOT"
+                  oldData?.autoMode === true && senderId === "LKM4602_BOT"
                     ? "user"
                     : "assistant",
                 content: newMessage.message,
@@ -122,7 +124,6 @@ const useChatSubscription = (
           };
         }
       );
-      setIsLoadingSummary(false);
     } catch (error) {
       toast({
         title: "Error",
@@ -130,7 +131,39 @@ const useChatSubscription = (
         status: "error",
         isClosable: true,
       });
+    } finally {
       setIsLoadingSummary(false);
+    }
+  }, [params.id, queryClient, toast]);
+
+  const generateResponse = useCallback(async () => {
+    const conversationId = params.id;
+    setIsGeneratingAIChat(true);
+    try {
+      const { data } = await axiosClient.post(`/generateChat/${params.id}`);
+      const { metadata } = data;
+      const generatedMessage = metadata;
+
+      queryClient.setQueryData<{
+        generatedResponseMessage: IAIConversationMessage;
+      }>(["generatedResponseMessage", conversationId], () => {
+        return {
+          generatedResponseMessage: {
+            role: "assistant",
+            content: generatedMessage,
+            isPending: true,
+          }
+        };
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Something went wrong! Please send again!",
+        status: "error",
+        isClosable: true,
+      });
+    } finally {
+      setIsGeneratingAIChat(false);
     }
   }, [params.id, queryClient, toast]);
 
@@ -140,9 +173,11 @@ const useChatSubscription = (
       isReceivingMessage: false,
       endChat,
       isLoadingSummary,
+      isGeneratingAIChat,
       toggleAutoChat,
+      generateResponse,
     }),
-    [endChat, isLoadingSummary, sendMessage, toggleAutoChat]
+    [endChat, isLoadingSummary, sendMessage, toggleAutoChat, generateResponse, isGeneratingAIChat]
   );
 };
 
