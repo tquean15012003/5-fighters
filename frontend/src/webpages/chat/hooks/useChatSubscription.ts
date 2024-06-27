@@ -145,7 +145,7 @@ const useChatSubscription = (
       const generatedMessage = metadata;
 
       queryClient.setQueryData<
-        IAIConversationMessage
+          IConversationMessage
       >(["generatedResponseMessage", conversationId], () => {
         return {
           role: "assistant",

@@ -34,7 +34,7 @@ const useGeneratedResponse = (conversationId?: string) => {
     })
 
     queryClient.setQueryData<
-        IAIConversationMessage
+        IConversationMessage
     >(["generatedResponseMessage", conversationId], () => {
       return {
         role: "user",
