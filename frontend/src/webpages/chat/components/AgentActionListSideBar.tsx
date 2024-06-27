@@ -72,7 +72,7 @@ export const AgentActionListSideBar = ({
                 _hover={{
                   bg: "red.500",
                 }}
-                disabled={isGeneratingAIChat}
+                disabled={isLoading}
                 onClick={handleGenerateResponse}
               >
                 Generate response
@@ -83,14 +83,14 @@ export const AgentActionListSideBar = ({
                 _active={{
                   bg: "orange.500",
                 }}
-                disabled={isLoadingSummary}
+                disabled={isLoading}
                 onClick={handleAutoChat}
               >
                 {chatMode === "manual" ? "Auto Chat" : "Manual Chat"}
               </Button>
               <Button
                 colorScheme="red"
-                disabled={isLoadingSummary}
+                disabled={isLoading}
                 onClick={handleEndChat}
               >
                 End chat
@@ -103,7 +103,7 @@ export const AgentActionListSideBar = ({
             <Button
               colorScheme="red"
               mr={3}
-              disabled={isLoadingSummary}
+              disabled={isLoading}
               onClick={onClose}
             >
               Cancel
