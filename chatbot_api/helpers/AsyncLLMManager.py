@@ -1,15 +1,16 @@
 import os
+import asyncio
 import logging
 
 
-from openai import OpenAI
-from dotenv import load_dotenv
+from openai import AsyncAssistantEventHandler, AsyncOpenAI
 from typing import List, Literal
 from typing_extensions import TypedDict
 from openai.types.beta.thread import Thread
+from openai.types.beta.assistant import Assistant
 
 from helpers.ToolCalling import AVAILABLE_TOOLS
-from helpers.CustomAssistantEventHandler import EventHandler
+from helpers.LLMConstants import DUMMY_STREAMING_ANSWER
 
 ALLOWED_RUNNING_MODE = ["test", "real"]
 ALLOWED_MODELS = ["gpt-3.5-turbo", "gpt-4o"]
@@ -28,53 +29,49 @@ logger = logging.getLogger(__name__)
 TSupportType = Literal["after_chat", "auto_chat"]
 
 
-class LLM:
-    def __init__(self, support_type: TSupportType):
-        logger.info("assistant LLM initilize")
+class AsyncLLM:
+    def __init__(self, client: AsyncOpenAI, support_type: TSupportType):
+        logger.info("LLM initilize")
         self._check_env()
-        self.client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+        self.client = client
         self.support_type: TSupportType = support_type
-        self.assistant = self._load_assisstant()
 
-    def create_thread(self, messages: List[TMessage]) -> Thread:
-        thread = self.client.beta.threads.create(messages=messages)
+    async def create_thread(self, messages: List[TMessage]) -> Thread:
+        thread = await self.client.beta.threads.create(messages=messages)
         return thread
 
-    def generate_response(self, user_inquiry: str, thread: Thread) -> str:
+    async def generate_response(
+        self,
+        user_inquiry: str,
+        assistant: Assistant,
+        thread: Thread,
+        event_hanlder: AsyncAssistantEventHandler,
+    ) -> str:
+
         if self.mode == "test":
             if self.support_type == "auto_chat":
-                return "This is an Faked AI Message for testing"
-            elif self.support_type == "after_chat":
-                return """
-                {
-                    "summary": "This is the summary",
-                    "tasks": ["Email the customer after finishing checking their account"]
-                }
-                """
+                if event_hanlder.on_text_generated:
+                    for word in DUMMY_STREAMING_ANSWER:
+                        await event_hanlder.on_text_generated(word, "IN_PROGRESS")
+                        await asyncio.sleep(0.05)
+                    return
             else:
                 raise ValueError("Support Type is not supported")
 
-        self.client.beta.threads.messages.create(
+        await self.client.beta.threads.messages.create(
             role="user",
             content=user_inquiry,
             thread_id=thread.id,
         )
 
-        with self.client.beta.threads.runs.stream(
+        async with self.client.beta.threads.runs.stream(
             thread_id=thread.id,
-            assistant_id=self.assistant.id,
-            event_handler=EventHandler(
-                client=self.client,
-                thread_id=thread.id,
-                assistant_id=self.assistant.id,
-            ),
+            assistant_id=assistant.id,
+            event_handler=event_hanlder,
         ) as stream:
-            stream.until_done()
+            await stream.until_done()
 
-        all_messages = self.client.beta.threads.messages.list(thread_id=thread.id)
-        return all_messages.data[0].content[0].text.value
-
-    def _load_assisstant(self):
+    async def load_assisstant(self):
         assistant_params = {"model": self.model}
         if self.support_type == "after_chat":
             assistant_params.update(
@@ -98,7 +95,8 @@ tasks: [str]""",
             )
         else:
             raise ValueError("Support Type is not supported")
-        return self.client.beta.assistants.create(**assistant_params)
+        assistant = await self.client.beta.assistants.create(**assistant_params)
+        return assistant
 
     def _check_env(self):
         # Check model name
@@ -115,25 +113,5 @@ tasks: [str]""",
             raise ValueError(
                 f"Running mode is not allowed. Please set RUNNING_NODE in .env to {' or '.join(ALLOWED_RUNNING_MODE)}"
             )
+
         self.mode = mode
-
-    def __del__(self):
-        try:
-            self.client.beta.assistants.delete(assistant_id=self.assistant.id)
-        except Exception as err:
-            logger.error("Failed to delete assistant!")
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, force=True)
-    logger = logging.getLogger(__name__)
-
-    load_dotenv()
-
-    newLLM = LLM(support_type="auto_chat")
-    newThread = newLLM.create_thread([])
-    response = newLLM.generate_response(
-        "Customer: I'm having trouble accessing my account. Every time I try to log in, it says my password is incorrect, but I'm sure I'm entering the correct password. Can you help me reset my password or find out what's going wrong?",
-        newThread,
-    )
-    logger.info(f"{response} test response")

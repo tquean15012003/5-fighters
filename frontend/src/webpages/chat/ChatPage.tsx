@@ -22,7 +22,10 @@ import useInterval from "../../hooks/useInterval";
 import useIntersectionObserver from "../../hooks/useIntersectionObserver";
 import { AgentActionListSideBar } from "./components/AgentActionListSideBar";
 import useSummary from "./hooks/useSummary";
-import { AfterChatModel } from "./components/AfterChatModel";
+import { AfterEndChatModel } from "./components/AfterEndChatModel.tsx";
+import useSuggestedResponse from "./hooks/useSuggestedResponse.ts";
+import { GeneratedResponseModel } from "./components/GeneratedResponseModel.tsx";
+import { TSummaryResponse } from "./types.ts";
 
 const ChatPage = () => {
   const { id } = useParams();
@@ -37,30 +40,48 @@ const ChatPage = () => {
     isLoading: isLoadingConversation,
     error: conversationError,
   } = useConversation(id);
-  const { resetSummary, summaryQuery } = useSummary(id);
-  const { data: summaryAndTasks, error: summaryError } = summaryQuery;
-  const isOpen =
-    summaryAndTasks?.summary.length !== 0 ||
-    summaryAndTasks?.tasks.length !== 0;
+
+  const [summaryAndTasks, setSummaryAndTasks] = useState<TSummaryResponse>();
+  const [suggestedResponse, setSuggestedResponse] = useState<string>();
+
+  const {
+    mutate: getSummary,
+    isPending: isLoadingSummary,
+    isError: isSummaryError,
+  } = useSummary(id, {
+    onSuccess(data) {
+      setSummaryAndTasks(data as TSummaryResponse);
+    },
+  });
+
+  const {
+    mutate: getSuggestedResponse,
+    isPending: isLoadingSuggestedResponse,
+    isError: isSuggestedResponseError,
+  } = useSuggestedResponse(id, {
+    onSuccess(data) {
+      setSuggestedResponse(data as string);
+    },
+  });
+
+  const isSummaryModelOpen = summaryAndTasks !== undefined;
+
+  const isGeneratedModelOpen = suggestedResponse !== undefined;
 
   const { conversation, autoMode } = conversationData ?? {};
-  const {
-    sendMessage,
-    endChat,
-    isReceivingMessage,
-    isLoadingSummary,
-    toggleAutoChat,
-  } = useChatSubscription(
-    {
-      id: id || "",
-    },
-    {
-      onMessageSent: () => scrollToBottom(),
-      onMessageEnd: () => scrollToBottom(),
-    }
-  );
+  const { sendMessage, isReceivingMessage, toggleAutoChat } =
+    useChatSubscription(
+      {
+        id: id || "",
+      },
+      {
+        onMessageSent: () => scrollToBottom(),
+        onMessageEnd: () => scrollToBottom(),
+      }
+    );
 
-  const isLoading = isLoadingConversation || isLoadingSummary;
+  const isLoading =
+    isLoadingConversation || isLoadingSummary || isLoadingSuggestedResponse;
 
   const scrollToBottom = useCallback(
     (behavior: ScrollBehavior = "smooth") => {
@@ -95,7 +116,7 @@ const ChatPage = () => {
       }));
   }, [conversation]);
 
-  if (conversationError || summaryError) {
+  if (conversationError || isSummaryError || isSuggestedResponseError) {
     return (
       <FallbackPage
         message={`An error occured while fetching the conversation details. Please try again later or contact support.`}
@@ -165,15 +186,31 @@ const ChatPage = () => {
                 }}
               />
               <AgentActionListSideBar
-                isLoading={isLoadingSummary}
-                handleEndChat={endChat}
+                isLoadingSummary={isLoadingSummary}
+                isGeneratingAIChat={isLoadingSuggestedResponse}
+                handleEndChat={() => {
+                  getSummary({});
+                }}
                 handleAutoChat={toggleAutoChat}
+                handleGenerateResponse={() => {
+                  getSuggestedResponse({});
+                }}
               />
-              <AfterChatModel
+              <GeneratedResponseModel
+                generatedResponseMessage={suggestedResponse ?? ""}
+                onCloseModal={() => {
+                  sendMessage(suggestedResponse ?? "");
+                  setSuggestedResponse(undefined);
+                }}
+                isOpen={isGeneratedModelOpen}
+              />
+              <AfterEndChatModel
                 summary={summaryAndTasks?.summary ?? ""}
                 tasks={summaryAndTasks?.tasks ?? []}
-                onCloseModal={resetSummary}
-                isOpen={isOpen}
+                onCloseModal={() => {
+                  setSummaryAndTasks(undefined);
+                }}
+                isOpen={isSummaryModelOpen}
               />
             </HStack>
           </PanelFooter>

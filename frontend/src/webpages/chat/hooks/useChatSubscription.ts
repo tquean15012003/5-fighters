@@ -1,14 +1,10 @@
-import { useToast } from "@chakra-ui/react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo } from "react";
 
-import {
-  IConversationMessage,
-  TResponseMessageMetaData,
-  TSummaryResponse,
-} from "../types";
+import { IConversationMessage, TResponseMessageMetaData } from "../types";
 import { ChatSubscriptionContext } from "../providers/ChatSubscriptionProvider";
-import { axiosClient } from "../../../lib/axios";
+
+import { useAuthContext } from "../../auth/AuthContext";
 
 const useChatSubscription = (
   params: { id: string },
@@ -18,10 +14,10 @@ const useChatSubscription = (
   } = {}
 ) => {
   const { onMessageSent, onMessageEnd } = options;
-  const toast = useToast();
   const queryClient = useQueryClient();
   const socket = useContext(ChatSubscriptionContext);
-  const [isLoadingSummary, setIsLoadingSummary] = useState(false);
+  const { authUser } = useAuthContext();
+
   useEffect(() => {
     socket?.on(
       "newMessage",
@@ -44,7 +40,7 @@ const useChatSubscription = (
               ...(oldData?.conversation || []),
               {
                 role:
-                  oldData?.autoMode == true && senderId === "LKM4602_BOT"
+                  senderId === "LKM4602_BOT" && authUser.role === "agent"
                     ? "user"
                     : "assistant",
                 content: newMessage.message,
@@ -58,7 +54,7 @@ const useChatSubscription = (
     return () => {
       socket?.off("newMessage");
     };
-  }, [socket, queryClient, onMessageEnd]);
+  }, [socket, queryClient, onMessageEnd, authUser.role]);
 
   const sendMessage = useCallback(
     async (message: string) => {
@@ -106,43 +102,14 @@ const useChatSubscription = (
     });
   }, [params.id, queryClient, socket]);
 
-  const endChat = useCallback(async () => {
-    const conversationId = params.id;
-    setIsLoadingSummary(true);
-    try {
-      const { data } = await axiosClient.post(`/summaryChat/${params.id}`);
-      const { metadata } = data;
-      const { summary, tasks } = metadata;
-      queryClient.setQueryData<TSummaryResponse>(
-        ["summary", conversationId],
-        () => {
-          return {
-            summary,
-            tasks,
-          };
-        }
-      );
-      setIsLoadingSummary(false);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Something went wrong! Please send again!",
-        status: "error",
-        isClosable: true,
-      });
-      setIsLoadingSummary(false);
-    }
-  }, [params.id, queryClient, toast]);
-
   return useMemo(
     () => ({
       sendMessage,
       isReceivingMessage: false,
-      endChat,
-      isLoadingSummary,
+
       toggleAutoChat,
     }),
-    [endChat, isLoadingSummary, sendMessage, toggleAutoChat]
+    [sendMessage, toggleAutoChat]
   );
 };
 

@@ -2,18 +2,17 @@ import { useMutation } from "@tanstack/react-query";
 import { axiosClient } from "../../../lib/axios";
 import { DefaultMutationOptions } from "../../../lib/react-query";
 
-const useSummary = (id?: string, options: DefaultMutationOptions = {}) => {
+const useSuggestedResponse = (id?: string, options: DefaultMutationOptions = {}) => {
   return useMutation({
     mutationKey: ["summary", id],
     mutationFn: async () => {
-      const { data } = await axiosClient.post(`/summaryChat/${id}`);
+      const { data } = await axiosClient.post(`/generateChat/${id}`);
       const { metadata } = data;
-      const { summary, tasks } = metadata;
-
-      return { summary, tasks };
+      const generatedMessage = metadata;
+      return generatedMessage;
     },
     ...options,
   });
 };
 
-export default useSummary;
+export default useSuggestedResponse;

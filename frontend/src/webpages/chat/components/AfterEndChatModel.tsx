@@ -19,7 +19,7 @@ type TProps = {
   isOpen: boolean;
   onCloseModal: () => void;
 };
-export const AfterChatModel = ({
+export const AfterEndChatModel = ({
   onCloseModal,
   summary,
   tasks,
@@ -43,16 +43,18 @@ export const AfterChatModel = ({
               <Text fontWeight="bold">Summary</Text>
               <Text>{summary}</Text>
             </Box>
-            <Box>
-              <Text fontWeight="bold">Tasks</Text>
-              {tasks.map((task) => {
-                return (
-                  <Text key={task}>
-                    <b>*</b> {task}
-                  </Text>
-                );
-              })}
-            </Box>
+            {tasks.length !== 0 && (
+              <Box>
+                <Text fontWeight="bold">Tasks</Text>
+                {tasks.map((task) => {
+                  return (
+                    <Text key={task}>
+                      <b>*</b> {task}
+                    </Text>
+                  );
+                })}
+              </Box>
+            )}
           </Flex>
         </ModalBody>
 

@@ -16,13 +16,15 @@ import { useAuthContext } from "../../auth/AuthContext";
 import useChatComponent from "./hooks/useChatComponent";
 
 type TProps = {
-  isLoading: boolean;
+  isLoadingSummary: boolean;
+  isGeneratingAIChat: boolean;
   handleGenerateResponse: () => void;
   handleAutoChat: () => void;
   handleEndChat: () => void;
 };
 export const AgentActionListSideBar = ({
-  isLoading,
+  isLoadingSummary,
+  isGeneratingAIChat,
   handleGenerateResponse,
   handleAutoChat,
   handleEndChat,
@@ -35,7 +37,8 @@ export const AgentActionListSideBar = ({
   if (authUser.role === "customer") {
     return null;
   }
-  console.log(isLoading);
+  const isLoading = isLoadingSummary || isGeneratingAIChat;
+
   return (
     <>
       <Button ref={btnRef} colorScheme="purple" onClick={onOpen}>
@@ -73,6 +76,7 @@ export const AgentActionListSideBar = ({
                 onClick={handleGenerateResponse}
               >
                 Generate response
+                {isGeneratingAIChat && <Spinner />}
               </Button>
               <Button
                 colorScheme="blue"
@@ -90,7 +94,7 @@ export const AgentActionListSideBar = ({
                 onClick={handleEndChat}
               >
                 End chat
-                {isLoading && <Spinner />}
+                {isLoadingSummary && <Spinner ml={3} />}
               </Button>
             </Flex>
           </DrawerBody>
