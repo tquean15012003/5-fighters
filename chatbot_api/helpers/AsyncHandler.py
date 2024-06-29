@@ -159,6 +159,18 @@ class AsyncEventHandler(AsyncAssistantEventHandler):
             logger.info(
                 f"on_tool_call_delta: Function arguments {delta.function.arguments}"
             )
+            if (
+                self.function_call_utils == 0
+                or delta.function.name != self.function_call_utils[-1]["function_name"]
+            ) and delta.function.name is not None:
+                self.function_call_utils.append(
+                    {
+                        "function_name": delta.function.name,
+                        "tool_id": delta.id,
+                        "arguments": "",
+                    }
+                )
+
             self.function_call_utils[-1]["arguments"] += delta.function.arguments
         elif delta.type == "code_interpreter":
             logger.info("on_tool_call_delta: code_interpreter")
