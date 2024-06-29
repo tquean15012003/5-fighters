@@ -1,30 +1,19 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { TSummaryResponse } from "../types";
+import { useMutation } from "@tanstack/react-query";
+import { axiosClient } from "../../../lib/axios";
+import { DefaultMutationOptions } from "../../../lib/react-query";
 
-const useConversation = (id?: string) => {
-  const queryClient = useQueryClient();
+const useSummary = (id?: string, options: DefaultMutationOptions = {}) => {
+  return useMutation({
+    mutationKey: ["summary", id],
+    mutationFn: async () => {
+      const { data } = await axiosClient.post(`/summaryChat/${id}`);
+      const { metadata } = data;
+      const { summary, tasks } = metadata;
 
-  const resetSummary = () => {
-    queryClient.setQueryData<TSummaryResponse>(["summary", id], () => {
-      return {
-        summary: "",
-        tasks: [],
-      };
-    });
-  };
-  return {
-    resetSummary,
-    summaryQuery: useQuery({
-      queryKey: ["summary", id],
-      queryFn: async () => {
-        const summary = "";
-        const tasks: string[] = [];
-        return { summary, tasks };
-      },
-      enabled: !!id,
-      staleTime: Infinity,
-    }),
-  };
+      return { summary, tasks };
+    },
+    ...options,
+  });
 };
 
-export default useConversation;
+export default useSummary;

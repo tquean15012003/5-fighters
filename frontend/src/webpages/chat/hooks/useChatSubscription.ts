@@ -2,14 +2,10 @@ import { useToast } from "@chakra-ui/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 
-import {
-  IAIConversationMessage,
-  IConversationMessage,
-  TResponseMessageMetaData,
-  TSummaryResponse,
-} from "../types";
+import { IConversationMessage, TResponseMessageMetaData } from "../types";
 import { ChatSubscriptionContext } from "../providers/ChatSubscriptionProvider";
 import { axiosClient } from "../../../lib/axios";
+import { useAuthContext } from "../../auth/AuthContext";
 
 const useChatSubscription = (
   params: { id: string },
@@ -22,8 +18,9 @@ const useChatSubscription = (
   const toast = useToast();
   const queryClient = useQueryClient();
   const socket = useContext(ChatSubscriptionContext);
-  const [isLoadingSummary, setIsLoadingSummary] = useState(false);
-  const [isGeneratingAIChat, setIsGeneratingAIChat] = useState(false)
+  const [isGeneratingAIChat, setIsGeneratingAIChat] = useState(false);
+  const { authUser } = useAuthContext();
+
   useEffect(() => {
     socket?.on(
       "newMessage",
@@ -46,7 +43,7 @@ const useChatSubscription = (
               ...(oldData?.conversation || []),
               {
                 role:
-                  oldData?.autoMode === true && senderId === "LKM4602_BOT"
+                  senderId === "LKM4602_BOT" && authUser.role === "agent"
                     ? "user"
                     : "assistant",
                 content: newMessage.message,
@@ -60,7 +57,7 @@ const useChatSubscription = (
     return () => {
       socket?.off("newMessage");
     };
-  }, [socket, queryClient, onMessageEnd]);
+  }, [socket, queryClient, onMessageEnd, authUser.role]);
 
   const sendMessage = useCallback(
     async (message: string) => {
@@ -108,34 +105,6 @@ const useChatSubscription = (
     });
   }, [params.id, queryClient, socket]);
 
-  const endChat = useCallback(async () => {
-    const conversationId = params.id;
-    setIsLoadingSummary(true);
-    try {
-      const { data } = await axiosClient.post(`/summaryChat/${params.id}`);
-      const { metadata } = data;
-      const { summary, tasks } = metadata;
-      queryClient.setQueryData<TSummaryResponse>(
-        ["summary", conversationId],
-        () => {
-          return {
-            summary,
-            tasks,
-          };
-        }
-      );
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Something went wrong! Please send again!",
-        status: "error",
-        isClosable: true,
-      });
-    } finally {
-      setIsLoadingSummary(false);
-    }
-  }, [params.id, queryClient, toast]);
-
   const generateResponse = useCallback(async () => {
     const conversationId = params.id;
     setIsGeneratingAIChat(true);
@@ -144,15 +113,16 @@ const useChatSubscription = (
       const { metadata } = data;
       const generatedMessage = metadata;
 
-      queryClient.setQueryData<
-          IConversationMessage
-      >(["generatedResponseMessage", conversationId], () => {
-        return {
-          role: "assistant",
-          content: generatedMessage,
-          isPending: true,
-        };
-      });
+      queryClient.setQueryData<IConversationMessage>(
+        ["generatedResponseMessage", conversationId],
+        () => {
+          return {
+            role: "assistant",
+            content: generatedMessage,
+            isPending: true,
+          };
+        }
+      );
     } catch (error) {
       toast({
         title: "Error",
@@ -169,13 +139,11 @@ const useChatSubscription = (
     () => ({
       sendMessage,
       isReceivingMessage: false,
-      endChat,
-      isLoadingSummary,
       isGeneratingAIChat,
       toggleAutoChat,
       generateResponse,
     }),
-    [endChat, isLoadingSummary, sendMessage, toggleAutoChat, generateResponse, isGeneratingAIChat]
+    [sendMessage, toggleAutoChat, generateResponse, isGeneratingAIChat]
   );
 };
 

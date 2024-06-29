@@ -37,7 +37,7 @@ export const AgentActionListSideBar = ({
   if (authUser.role === "customer") {
     return null;
   }
-  const isLoading = isLoadingSummary || isGeneratingAIChat
+  const isLoading = isLoadingSummary || isGeneratingAIChat;
 
   return (
     <>
@@ -94,7 +94,7 @@ export const AgentActionListSideBar = ({
                 onClick={handleEndChat}
               >
                 End chat
-                {isLoadingSummary && <Spinner />}
+                {isLoadingSummary && <Spinner ml={3} />}
               </Button>
             </Flex>
           </DrawerBody>

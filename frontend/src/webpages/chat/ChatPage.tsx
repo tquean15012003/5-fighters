@@ -25,6 +25,7 @@ import useSummary from "./hooks/useSummary";
 import { AfterEndChatModel } from "./components/AfterEndChatModel.tsx";
 import useGeneratedResponse from "./hooks/useGeneratedResponse.ts";
 import { GeneratedResponseModel } from "./components/GeneratedResponseModel.tsx";
+import { TSummaryResponse } from "./types.ts";
 
 const ChatPage = () => {
   const { id } = useParams();
@@ -40,22 +41,32 @@ const ChatPage = () => {
     error: conversationError,
   } = useConversation(id);
 
-  const { resetSummary, summaryQuery } = useSummary(id);
-  const { data: summaryAndTasks, error: summaryError } = summaryQuery;
-  const isSummaryModelOpen =
-    summaryAndTasks?.summary.length !== 0 ||
-    summaryAndTasks?.tasks.length !== 0;
+  const [summaryAndTasks, setSummaryAndTasks] = useState<TSummaryResponse>();
 
-  const { sendGeneratedResponse, generatedResponseQuery } = useGeneratedResponse(id)
-  const { data: generatedResponseMessage, error: generatedResponseMessageError } = generatedResponseQuery;
+  const {
+    mutate: getSummary,
+    isPending: isLoadingSummary,
+    isError: isSummaryError,
+  } = useSummary(id, {
+    onSuccess(data) {
+      setSummaryAndTasks(data as TSummaryResponse);
+    },
+  });
+
+  const isSummaryModelOpen = summaryAndTasks !== undefined;
+
+  const { sendGeneratedResponse, generatedResponseQuery } =
+    useGeneratedResponse(id);
+  const {
+    data: generatedResponseMessage,
+    error: generatedResponseMessageError,
+  } = generatedResponseQuery;
   const isGeneratedModelOpen = generatedResponseMessage?.content.length !== 0;
 
   const { conversation, autoMode } = conversationData ?? {};
   const {
     sendMessage,
-    endChat,
     isReceivingMessage,
-    isLoadingSummary,
     isGeneratingAIChat,
     toggleAutoChat,
     generateResponse,
@@ -69,7 +80,8 @@ const ChatPage = () => {
     }
   );
 
-  const isLoading = isLoadingConversation || isLoadingSummary || isGeneratingAIChat;
+  const isLoading =
+    isLoadingConversation || isLoadingSummary || isGeneratingAIChat;
 
   const scrollToBottom = useCallback(
     (behavior: ScrollBehavior = "smooth") => {
@@ -104,7 +116,7 @@ const ChatPage = () => {
       }));
   }, [conversation]);
 
-  if (conversationError || summaryError || generatedResponseMessageError) {
+  if (conversationError || isSummaryError || generatedResponseMessageError) {
     return (
       <FallbackPage
         message={`An error occured while fetching the conversation details. Please try again later or contact support.`}
@@ -176,18 +188,25 @@ const ChatPage = () => {
               <AgentActionListSideBar
                 isLoadingSummary={isLoadingSummary}
                 isGeneratingAIChat={isGeneratingAIChat}
-                handleEndChat={endChat}
+                handleEndChat={() => {
+                  getSummary({});
+                }}
                 handleAutoChat={toggleAutoChat}
-                handleGenerateResponse={generateResponse}/>
+                handleGenerateResponse={generateResponse}
+              />
               <GeneratedResponseModel
-                generatedResponseMessage={generatedResponseMessage?.content ?? ""}
+                generatedResponseMessage={
+                  generatedResponseMessage?.content ?? ""
+                }
                 onCloseModal={sendGeneratedResponse}
                 isOpen={isGeneratedModelOpen}
               />
               <AfterEndChatModel
                 summary={summaryAndTasks?.summary ?? ""}
                 tasks={summaryAndTasks?.tasks ?? []}
-                onCloseModal={resetSummary}
+                onCloseModal={() => {
+                  setSummaryAndTasks(undefined);
+                }}
                 isOpen={isSummaryModelOpen}
               />
             </HStack>
