@@ -40,7 +40,6 @@ class ChatHandler:
             return chat_response
 
         async def send_message(message: str, status: MessageStatus):
-            print(ChatWsResponse(content=message, status=status).model_dump_json())
             await websocket.send_text(
                 ChatWsResponse(content=message, status=status).model_dump_json()
             )
