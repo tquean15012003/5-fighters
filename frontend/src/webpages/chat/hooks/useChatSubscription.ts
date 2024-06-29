@@ -1,10 +1,9 @@
-import { useToast } from "@chakra-ui/react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo } from "react";
 
 import { IConversationMessage, TResponseMessageMetaData } from "../types";
 import { ChatSubscriptionContext } from "../providers/ChatSubscriptionProvider";
-import { axiosClient } from "../../../lib/axios";
+
 import { useAuthContext } from "../../auth/AuthContext";
 
 const useChatSubscription = (
@@ -15,10 +14,8 @@ const useChatSubscription = (
   } = {}
 ) => {
   const { onMessageSent, onMessageEnd } = options;
-  const toast = useToast();
   const queryClient = useQueryClient();
   const socket = useContext(ChatSubscriptionContext);
-  const [isGeneratingAIChat, setIsGeneratingAIChat] = useState(false);
   const { authUser } = useAuthContext();
 
   useEffect(() => {
@@ -105,45 +102,14 @@ const useChatSubscription = (
     });
   }, [params.id, queryClient, socket]);
 
-  const generateResponse = useCallback(async () => {
-    const conversationId = params.id;
-    setIsGeneratingAIChat(true);
-    try {
-      const { data } = await axiosClient.post(`/generateChat/${params.id}`);
-      const { metadata } = data;
-      const generatedMessage = metadata;
-
-      queryClient.setQueryData<IConversationMessage>(
-        ["generatedResponseMessage", conversationId],
-        () => {
-          return {
-            role: "assistant",
-            content: generatedMessage,
-            isPending: true,
-          };
-        }
-      );
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Something went wrong! Please send again!",
-        status: "error",
-        isClosable: true,
-      });
-    } finally {
-      setIsGeneratingAIChat(false);
-    }
-  }, [params.id, queryClient, toast]);
-
   return useMemo(
     () => ({
       sendMessage,
       isReceivingMessage: false,
-      isGeneratingAIChat,
+
       toggleAutoChat,
-      generateResponse,
     }),
-    [sendMessage, toggleAutoChat, generateResponse, isGeneratingAIChat]
+    [sendMessage, toggleAutoChat]
   );
 };
 

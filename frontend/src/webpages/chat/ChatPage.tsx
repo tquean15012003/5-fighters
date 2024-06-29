@@ -23,7 +23,7 @@ import useIntersectionObserver from "../../hooks/useIntersectionObserver";
 import { AgentActionListSideBar } from "./components/AgentActionListSideBar";
 import useSummary from "./hooks/useSummary";
 import { AfterEndChatModel } from "./components/AfterEndChatModel.tsx";
-import useGeneratedResponse from "./hooks/useGeneratedResponse.ts";
+import useSuggestedResponse from "./hooks/useSuggestedResponse.ts";
 import { GeneratedResponseModel } from "./components/GeneratedResponseModel.tsx";
 import { TSummaryResponse } from "./types.ts";
 
@@ -42,6 +42,7 @@ const ChatPage = () => {
   } = useConversation(id);
 
   const [summaryAndTasks, setSummaryAndTasks] = useState<TSummaryResponse>();
+  const [suggestedResponse, setSuggestedResponse] = useState<string>();
 
   const {
     mutate: getSummary,
@@ -53,35 +54,34 @@ const ChatPage = () => {
     },
   });
 
+  const {
+    mutate: getSuggestedResponse,
+    isPending: isLoadingSuggestedResponse,
+    isError: isSuggestedResponseError,
+  } = useSuggestedResponse(id, {
+    onSuccess(data) {
+      setSuggestedResponse(data as string);
+    },
+  });
+
   const isSummaryModelOpen = summaryAndTasks !== undefined;
 
-  const { sendGeneratedResponse, generatedResponseQuery } =
-    useGeneratedResponse(id);
-  const {
-    data: generatedResponseMessage,
-    error: generatedResponseMessageError,
-  } = generatedResponseQuery;
-  const isGeneratedModelOpen = generatedResponseMessage?.content.length !== 0;
+  const isGeneratedModelOpen = suggestedResponse !== undefined;
 
   const { conversation, autoMode } = conversationData ?? {};
-  const {
-    sendMessage,
-    isReceivingMessage,
-    isGeneratingAIChat,
-    toggleAutoChat,
-    generateResponse,
-  } = useChatSubscription(
-    {
-      id: id || "",
-    },
-    {
-      onMessageSent: () => scrollToBottom(),
-      onMessageEnd: () => scrollToBottom(),
-    }
-  );
+  const { sendMessage, isReceivingMessage, toggleAutoChat } =
+    useChatSubscription(
+      {
+        id: id || "",
+      },
+      {
+        onMessageSent: () => scrollToBottom(),
+        onMessageEnd: () => scrollToBottom(),
+      }
+    );
 
   const isLoading =
-    isLoadingConversation || isLoadingSummary || isGeneratingAIChat;
+    isLoadingConversation || isLoadingSummary || isLoadingSuggestedResponse;
 
   const scrollToBottom = useCallback(
     (behavior: ScrollBehavior = "smooth") => {
@@ -116,7 +116,7 @@ const ChatPage = () => {
       }));
   }, [conversation]);
 
-  if (conversationError || isSummaryError || generatedResponseMessageError) {
+  if (conversationError || isSummaryError || isSuggestedResponseError) {
     return (
       <FallbackPage
         message={`An error occured while fetching the conversation details. Please try again later or contact support.`}
@@ -187,18 +187,21 @@ const ChatPage = () => {
               />
               <AgentActionListSideBar
                 isLoadingSummary={isLoadingSummary}
-                isGeneratingAIChat={isGeneratingAIChat}
+                isGeneratingAIChat={isLoadingSuggestedResponse}
                 handleEndChat={() => {
                   getSummary({});
                 }}
                 handleAutoChat={toggleAutoChat}
-                handleGenerateResponse={generateResponse}
+                handleGenerateResponse={() => {
+                  getSuggestedResponse({});
+                }}
               />
               <GeneratedResponseModel
-                generatedResponseMessage={
-                  generatedResponseMessage?.content ?? ""
-                }
-                onCloseModal={sendGeneratedResponse}
+                generatedResponseMessage={suggestedResponse ?? ""}
+                onCloseModal={() => {
+                  sendMessage(suggestedResponse ?? "");
+                  setSuggestedResponse(undefined);
+                }}
                 isOpen={isGeneratedModelOpen}
               />
               <AfterEndChatModel
