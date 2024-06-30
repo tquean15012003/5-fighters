@@ -133,6 +133,7 @@ const ChatPage = () => {
           isLoading={isLoading}
           isReceivingMessages={isReceivingMessage}
           chatMode={autoMode ? "auto" : "manual"}
+          shouldUseMarkdownUserBubbles={true}
         >
           <PanelBody>
             <Stack spacing={4} overflow="auto" flexGrow={1}>

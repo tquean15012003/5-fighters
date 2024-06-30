@@ -37,13 +37,9 @@ export const ChatBubble: React.FC<
       (chatRole === "user" && shouldUseMarkdownUserBubbles)) &&
       !isPending);
   const showCursor =
-    chatRole === "assistant" &&
-    isPending &&
-    (typeof children === "string" ? !!children?.length : false);
+    isPending && (typeof children === "string" ? !!children?.length : false);
   const showLoader =
-    chatRole === "assistant" &&
-    isPending &&
-    (typeof children === "string" ? !children?.length : !children);
+    isPending && (typeof children === "string" ? !children?.length : !children);
 
   const chatBubbleProps = getChatBubbleProps(chatRole, colorScheme, theme);
 

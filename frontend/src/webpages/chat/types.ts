@@ -20,6 +20,10 @@ export type IConversationMessage =
 
 export type ChatMode = "auto" | "manual";
 
+export type TResponseStatus = {
+  status: "ERROR" | "COMPLETE" | "START" | "IN_PROGRESS" | "MANUAL";
+};
+
 export type TResponseMessageMetaData = {
   senderId: string;
   conversationId: string;
