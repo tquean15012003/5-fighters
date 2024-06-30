@@ -24,11 +24,14 @@ const useChatSubscription = (
       ({
         conversationId,
         senderId,
-        newMessage,
+        message,
+        status,
       }: {
         conversationId: string;
         senderId: string;
-        newMessage: TResponseMessageMetaData;
+        // newMessage: TResponseMessageMetaData;
+        message: string;
+        status: string;
       }) => {
         queryClient.setQueryData<{
           conversation: IConversationMessage[];
@@ -43,7 +46,7 @@ const useChatSubscription = (
                   senderId === "LKM4602_BOT" && authUser.role === "agent"
                     ? "user"
                     : "assistant",
-                content: newMessage.message,
+                content: message,
               },
             ],
           };

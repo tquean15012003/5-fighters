@@ -92,17 +92,14 @@ class ChatService {
 
     for (let i of conversation.participants) {
       if (senderId !== "LKM4602_BOT" && i == senderId) {
-        // if (i == senderId) {
         continue;
       }
 
       const receiverSocketId = getReceiverSocketId(i);
 
       io.to(receiverSocketId).emit("newMessage", {
+        ...newMessage,
         status: "COMPLETE",
-        conversationId,
-        senderId,
-        newMessage,
       });
     }
     return newMessage;
@@ -141,10 +138,10 @@ class ChatService {
     const conversation = await chatModel.getConversationById(conversationId);
     if (!conversation) throw new BadRequestError("Conversation not exist");
 
-    // if (!conversation.autoMode)
-    //   throw new BadRequestError("AutoChat mode not available for this chat");
+    console.log("Start a new ");
 
     let messages: any = [];
+
     await conversation.messages.forEach((chat: Message) => {
       const obj = {
         role: chat.senderId === "LKM4602" ? "assistant" : "user",
@@ -154,8 +151,6 @@ class ChatService {
     });
 
     let receivedMessages: string[] = [];
-
-    ws.send(messages);
 
     ws.onmessage = async (event: any) => {
       const data = JSON.parse(event.data);
@@ -174,46 +169,43 @@ class ChatService {
         };
 
         await chatModel.saveMessage(conversationId, newMessage);
-
-        for (let i of conversation.participants) {
-          if (i === "LKM4602") {
-            continue;
-          }
-
-          const receiverSocketId = getReceiverSocketId(i);
-
-          io.to(receiverSocketId).emit("newMessage", {
-            status: status,
-            conversationId,
-            senderId: "LKM4602_BOT",
-            content,
-          });
-        }
+        ChatService.emitNewMessage(conversation, conversationId, data);
 
         return newMessage;
       }
 
-      for (let i of conversation.participants) {
-        if (i === "LKM4602") {
-          continue;
-        }
-
-        const receiverSocketId = getReceiverSocketId(i);
-
-        io.to(receiverSocketId).emit("newMessage", {
-          status: status,
-          conversationId,
-          senderId: "LKM4602_BOT",
-          content,
-        });
-      }
+      ChatService.emitNewMessage(conversation, conversationId, data);
     };
+
+    ws.send(JSON.stringify({ messages: messages }));
+
     return {
       senderId: "LKM4602",
       conversationId,
       message: "",
     };
   }
+
+  static emitNewMessage = (
+    conversation: IConversation,
+    conversationId: string,
+    data: any
+  ) => {
+    for (let i of conversation.participants) {
+      if (i === "LKM4602") {
+        continue;
+      }
+
+      const receiverSocketId = getReceiverSocketId(i);
+
+      io.to(receiverSocketId).emit("newMessage", {
+        message: data.content,
+        status: data.status,
+        conversationId: conversationId,
+        senderId: "LKM4602_BOT",
+      });
+    }
+  };
 }
 
 export default ChatService;
