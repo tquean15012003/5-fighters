@@ -99,7 +99,7 @@ class ChatService {
 
       io.to(receiverSocketId).emit("newMessage", {
         ...newMessage,
-        status: "COMPLETE",
+        status: "MANUAL",
       });
     }
     return newMessage;
@@ -138,8 +138,6 @@ class ChatService {
     const conversation = await chatModel.getConversationById(conversationId);
     if (!conversation) throw new BadRequestError("Conversation not exist");
 
-    console.log("Start a new ");
-
     let messages: any = [];
 
     await conversation.messages.forEach((chat: Message) => {
@@ -169,12 +167,22 @@ class ChatService {
         };
 
         await chatModel.saveMessage(conversationId, newMessage);
-        ChatService.emitNewMessage(conversation, conversationId, data);
+        ChatService.emitNewMessage(
+          conversation,
+          conversationId,
+          "LKM4602_BOT",
+          data
+        );
 
         return newMessage;
       }
 
-      ChatService.emitNewMessage(conversation, conversationId, data);
+      ChatService.emitNewMessage(
+        conversation,
+        conversationId,
+        "LKM4602_BOT",
+        data
+      );
     };
 
     ws.send(JSON.stringify({ messages: messages }));
@@ -189,10 +197,11 @@ class ChatService {
   static emitNewMessage = (
     conversation: IConversation,
     conversationId: string,
+    senderId: string,
     data: any
   ) => {
     for (let i of conversation.participants) {
-      if (i === "LKM4602") {
+      if (senderId !== "LKM4602_BOT" && i == senderId) {
         continue;
       }
 
@@ -202,7 +211,7 @@ class ChatService {
         message: data.content,
         status: data.status,
         conversationId: conversationId,
-        senderId: "LKM4602_BOT",
+        senderId: senderId,
       });
     }
   };
