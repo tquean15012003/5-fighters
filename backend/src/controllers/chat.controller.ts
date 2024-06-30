@@ -21,7 +21,6 @@ export class ChatController {
     res: Response,
     next: NextFunction
   ) => {
-    console.log(req.params.id);
     new OK({
       message: "Succesfull retrieve all conversations",
       metadata: await ChatService.allConversation(req?.params?.id),
@@ -68,7 +67,9 @@ export class ChatController {
   ) => {
     new OK({
       message: "Succesfull generated chat content",
-      metadata: await ChatService.generateChat(req?.params?.id),
+      metadata: await ChatService.generateChat({
+        conversationId: req?.params?.id,
+      }),
     }).send(res);
   };
 }

@@ -4,22 +4,16 @@ import { v4 as uuidv4 } from "uuid";
 import { getReceiverSocketId, io, ws } from "../socket/socket";
 import axios from "axios";
 import dotenv from "dotenv";
+import { MessageEvent } from "ws";
+
+import {
+  IConversation,
+  IMessage,
+  IMessageHistory,
+  TRole,
+} from "../core/entity";
 
 dotenv.config();
-
-interface IConversation {
-  id: string;
-  name: string;
-  participants: string[];
-  messages: Message[];
-  autoMode: boolean;
-}
-
-interface Message {
-  senderId: string;
-  conversationId: string;
-  message: string;
-}
 
 class ChatService {
   static async createConversation({ chatMembers }: { chatMembers: string[] }) {
@@ -42,7 +36,6 @@ class ChatService {
   }
 
   static async allConversation(userId: string) {
-    console.log(userId, "userId");
     const allConversations = await chatModel.getConversations();
 
     const filterConversations: IConversation[] = [];
@@ -56,7 +49,6 @@ class ChatService {
   }
 
   static async getConversationContent(conversationId: string) {
-    console.log(conversationId, "conversationId");
     const selectedConversation = await chatModel.getConversationById(
       conversationId
     );
@@ -82,7 +74,7 @@ class ChatService {
     const conversation = await chatModel.getConversationById(conversationId);
     if (!conversation) throw new BadRequestError("Conversation not exist");
 
-    const newMessage: Message = {
+    const newMessage: IMessage = {
       senderId: senderId === "LKM4602_BOT" ? "LKM4602" : senderId,
       conversationId: conversationId,
       message: messageContent,
@@ -90,18 +82,14 @@ class ChatService {
 
     await chatModel.saveMessage(conversationId, newMessage);
 
-    for (let i of conversation.participants) {
-      if (senderId !== "LKM4602_BOT" && i == senderId) {
-        continue;
-      }
+    ChatService.emitNewMessage(
+      conversation,
+      conversationId,
+      senderId,
+      messageContent,
+      "MANUAL"
+    );
 
-      const receiverSocketId = getReceiverSocketId(i);
-
-      io.to(receiverSocketId).emit("newMessage", {
-        ...newMessage,
-        status: "MANUAL",
-      });
-    }
     return newMessage;
   }
 
@@ -110,13 +98,12 @@ class ChatService {
     if (!conversation || conversation.messages.length < 1)
       throw new BadRequestError("Conversation not exist");
 
-    let messages: any = [];
-    await conversation.messages.forEach((chat: Message) => {
-      const obj = {
+    let messages: IMessageHistory[] = [];
+    await conversation.messages.forEach((chat: IMessage) => {
+      messages.push({
         role: chat.senderId === "LKM4602" ? "assistant" : "user",
         content: chat.message,
-      };
-      messages.push(obj);
+      });
     });
 
     const summaryContent = await axios.post(
@@ -134,25 +121,63 @@ class ChatService {
     return summaryContent.data;
   }
 
-  static async generateChat(conversationId: string) {
+  static async generateChat({
+    conversationId,
+    manualClick = true,
+  }: {
+    conversationId: string;
+    manualClick?: boolean;
+  }) {
     const conversation = await chatModel.getConversationById(conversationId);
     if (!conversation) throw new BadRequestError("Conversation not exist");
 
-    let messages: any = [];
+    let messages: IMessageHistory[] = [];
 
-    await conversation.messages.forEach((chat: Message) => {
-      const obj = {
+    await conversation.messages.forEach((chat: IMessage) => {
+      messages.push({
         role: chat.senderId === "LKM4602" ? "assistant" : "user",
         content: chat.message,
-      };
-      messages.push(obj);
+      });
     });
 
+    let response;
+
+    if (manualClick) response = ChatService.HandleManualGenerateChat(messages);
+    else
+      response = ChatService.HandleAutoGenerateChat(
+        conversation,
+        messages,
+        conversationId
+      );
+
+    return response;
+  }
+
+  static async HandleManualGenerateChat(messages: IMessageHistory[]) {
+    const autoChat = await axios.post(
+      `${process.env.CHATBOT_BASE_API_URL}/generate`,
+      {
+        messages: messages,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return autoChat.data;
+  }
+
+  static async HandleAutoGenerateChat(
+    conversation: IConversation,
+    messages: IMessageHistory[],
+    conversationId: string
+  ) {
     let receivedMessages: string[] = [];
 
-    ws.onmessage = async (event: any) => {
-      const data = JSON.parse(event.data);
-      console.log("Message received from server:", data);
+    ws.onmessage = async (event: MessageEvent) => {
+      const data = JSON.parse(event.data as string);
 
       const { status, content } = data;
       receivedMessages.push(content);
@@ -171,7 +196,8 @@ class ChatService {
           conversation,
           conversationId,
           "LKM4602_BOT",
-          data
+          data.content,
+          data.status
         );
 
         return newMessage;
@@ -181,25 +207,21 @@ class ChatService {
         conversation,
         conversationId,
         "LKM4602_BOT",
-        data
+        data.content,
+        data.status
       );
     };
 
     ws.send(JSON.stringify({ messages: messages }));
-
-    return {
-      senderId: "LKM4602",
-      conversationId,
-      message: "",
-    };
   }
 
-  static emitNewMessage = (
+  static async emitNewMessage(
     conversation: IConversation,
     conversationId: string,
     senderId: string,
-    data: any
-  ) => {
+    content: string,
+    status: string
+  ) {
     for (let i of conversation.participants) {
       if (senderId !== "LKM4602_BOT" && i == senderId) {
         continue;
@@ -208,13 +230,13 @@ class ChatService {
       const receiverSocketId = getReceiverSocketId(i);
 
       io.to(receiverSocketId).emit("newMessage", {
-        message: data.content,
-        status: data.status,
+        message: content,
+        status: status,
         conversationId: conversationId,
         senderId: senderId,
       });
     }
-  };
+  }
 }
 
 export default ChatService;

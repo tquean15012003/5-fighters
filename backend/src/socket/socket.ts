@@ -17,11 +17,10 @@ const io = new Server(httpServer, {
 
 const ws = new WebSocket("ws://127.0.0.1:8000/api/v1/chat/ws/generate");
 
-var userSocketMap: any = {};
+var userSocketMap: Record<string, string> = {};
 
 io.on("connection", (frontendSocket) => {
-  // ws.onopen = () => {
-  const userId: any = frontendSocket.handshake.query.userId;
+  const userId = frontendSocket.handshake.query.userId as string;
   if (userId) {
     userSocketMap[userId] = frontendSocket.id;
   }
@@ -45,7 +44,10 @@ io.on("connection", (frontendSocket) => {
             messageContent: msg,
           });
 
-          await ChatService.generateChat(conversationId);
+          await ChatService.generateChat({
+            conversationId: conversationId,
+            manualClick: false,
+          });
         } else {
           await ChatService.sendMessage({
             senderId: userId,
@@ -85,7 +87,6 @@ io.on("connection", (frontendSocket) => {
   ws.onerror = (error) => {
     console.error("WebSocket error:", error);
   };
-  // };
 });
 
 export const getReceiverSocketId = (userId: string) => {

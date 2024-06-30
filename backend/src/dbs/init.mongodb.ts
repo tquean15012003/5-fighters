@@ -1,19 +1,7 @@
-interface IConversation {
-  id: string;
-  name: string;
-  participants: string[];
-  messages: Message[];
-  autoMode: boolean;
-}
-
-interface Message {
-  senderId: string;
-  conversationId: string;
-  message: string;
-}
+import { IConversation, IMessage } from "../core/entity";
 
 class Database {
-  private static instance: any;
+  private static instance: Database;
   private conversations: IConversation[] = [];
 
   private constructor() {}
@@ -36,17 +24,13 @@ class Database {
   }
 
   public getConversationById(id: string): IConversation | undefined {
-    for (let e of this.conversations) {
-      console.log("conversation", e);
-      console.log(e.id, typeof e.id);
-    }
     return this.conversations.find((convo) => convo.id === id);
   }
 
   public saveMessage(
     conversationId: string,
-    messsage: Message
-  ): Message | undefined {
+    messsage: IMessage
+  ): IMessage | undefined {
     const conversation = this.getConversationById(conversationId);
     conversation?.messages.push(messsage);
     return messsage;

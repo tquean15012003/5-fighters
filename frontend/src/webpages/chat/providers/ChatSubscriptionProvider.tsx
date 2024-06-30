@@ -1,41 +1,3 @@
-// import { PropsWithChildren, createContext, useEffect, useState } from "react";
-// import { useAuthContext } from "../../auth/AuthContext";
-
-// export const ChatSubscriptionContext = createContext({});
-
-// const ChatSubscriptionProvider: React.FC<PropsWithChildren> = ({
-//   children,
-// }) => {
-//   const { authUser } = useAuthContext();
-//   const userId = authUser.id;
-
-//   const webSocket = new WebSocket("ws://localhost:3100", `userId=${userId}`);
-//   const [ws, setWs] = useState<WebSocket>(webSocket);
-
-//   useEffect(() => {
-//     const onClose = () => {
-//       setTimeout(() => {
-//         console.error("Websocket closed. Reconnecting in 1sec...");
-//         setWs(new WebSocket("ws://localhost:3100", `userId=${userId}`));
-//       }, 1000);
-//     };
-
-//     ws.addEventListener("close", onClose);
-
-//     return () => {
-//       ws.removeEventListener("close", onClose);
-//     };
-//   }, [ws, setWs, userId]);
-
-//   return (
-//     <ChatSubscriptionContext.Provider value={ws}>
-//       {children}
-//     </ChatSubscriptionContext.Provider>
-//   );
-// };
-
-// export default ChatSubscriptionProvider;
-
 import { createContext, useEffect, useState } from "react";
 import { Socket, io } from "socket.io-client";
 import { useAuthContext } from "../../auth/AuthContext";
@@ -57,7 +19,7 @@ const ChatSubscriptionProvider = ({ children }: { children: any }) => {
       },
     });
     setSocket(socket);
-    
+
     return () => {
       socket.close();
     };

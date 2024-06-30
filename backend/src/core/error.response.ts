@@ -2,9 +2,9 @@
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
 
 class ErrorResponse extends Error {
-  status: any;
+  status: StatusCodes;
 
-  constructor(message: string, status: any) {
+  constructor(message: string, status: StatusCodes) {
     super(message);
     this.status = status;
   }
@@ -13,7 +13,7 @@ class ErrorResponse extends Error {
 class ConflictRequestError extends ErrorResponse {
   constructor(
     message: string = ReasonPhrases.CONFLICT,
-    status: any = StatusCodes.CONFLICT
+    status: StatusCodes = StatusCodes.CONFLICT
   ) {
     super(message, status);
   }
@@ -22,7 +22,7 @@ class ConflictRequestError extends ErrorResponse {
 class BadRequestError extends ErrorResponse {
   constructor(
     message: string = ReasonPhrases.FORBIDDEN,
-    status: any = StatusCodes.FORBIDDEN
+    status: StatusCodes = StatusCodes.FORBIDDEN
   ) {
     super(message, status);
   }
@@ -31,7 +31,7 @@ class BadRequestError extends ErrorResponse {
 class AuthFailureError extends ErrorResponse {
   constructor(
     message: string = ReasonPhrases.UNAUTHORIZED,
-    status: any = StatusCodes.UNAUTHORIZED
+    status: StatusCodes = StatusCodes.UNAUTHORIZED
   ) {
     super(message, status);
   }
@@ -40,7 +40,7 @@ class AuthFailureError extends ErrorResponse {
 class NotFoundError extends ErrorResponse {
   constructor(
     message: string = ReasonPhrases.NOT_FOUND,
-    status: any = StatusCodes.NOT_FOUND
+    status: StatusCodes = StatusCodes.NOT_FOUND
   ) {
     super(message, status);
   }
@@ -48,7 +48,7 @@ class NotFoundError extends ErrorResponse {
 class ForbiddenError extends ErrorResponse {
   constructor(
     message: string = ReasonPhrases.FORBIDDEN,
-    status: any = StatusCodes.FORBIDDEN
+    status: StatusCodes = StatusCodes.FORBIDDEN
   ) {
     super(message, status);
   }
