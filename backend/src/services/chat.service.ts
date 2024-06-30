@@ -1,7 +1,7 @@
 import { BadRequestError } from "../core/error.response";
 import { chatModel } from "../dbs/init.mongodb";
 import { v4 as uuidv4 } from "uuid";
-import { getReceiverSocketId, io } from "../socket/socket";
+import { getReceiverSocketId, io, ws } from "../socket/socket";
 import axios from "axios";
 import dotenv from "dotenv";
 
@@ -92,12 +92,14 @@ class ChatService {
 
     for (let i of conversation.participants) {
       if (senderId !== "LKM4602_BOT" && i == senderId) {
+        // if (i == senderId) {
         continue;
       }
 
       const receiverSocketId = getReceiverSocketId(i);
 
       io.to(receiverSocketId).emit("newMessage", {
+        status: "COMPLETE",
         conversationId,
         senderId,
         newMessage,
@@ -151,19 +153,66 @@ class ChatService {
       messages.push(obj);
     });
 
-    const autoChat = await axios.post(
-      `${process.env.CHATBOT_BASE_API_URL}/generate`,
-      {
-        messages: messages,
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    let receivedMessages: string[] = [];
 
-    return autoChat.data;
+    ws.send(messages);
+
+    ws.onmessage = async (event: any) => {
+      const data = JSON.parse(event.data);
+      console.log("Message received from server:", data);
+
+      const { status, content } = data;
+      receivedMessages.push(content);
+
+      if (status == "COMPLETE") {
+        const finalMessage = receivedMessages.join(" ");
+
+        const newMessage = {
+          senderId: "LKM4602",
+          conversationId,
+          message: finalMessage,
+        };
+
+        await chatModel.saveMessage(conversationId, newMessage);
+
+        for (let i of conversation.participants) {
+          if (i === "LKM4602") {
+            continue;
+          }
+
+          const receiverSocketId = getReceiverSocketId(i);
+
+          io.to(receiverSocketId).emit("newMessage", {
+            status: status,
+            conversationId,
+            senderId: "LKM4602_BOT",
+            content,
+          });
+        }
+
+        return newMessage;
+      }
+
+      for (let i of conversation.participants) {
+        if (i === "LKM4602") {
+          continue;
+        }
+
+        const receiverSocketId = getReceiverSocketId(i);
+
+        io.to(receiverSocketId).emit("newMessage", {
+          status: status,
+          conversationId,
+          senderId: "LKM4602_BOT",
+          content,
+        });
+      }
+    };
+    return {
+      senderId: "LKM4602",
+      conversationId,
+      message: "",
+    };
   }
 }
 
