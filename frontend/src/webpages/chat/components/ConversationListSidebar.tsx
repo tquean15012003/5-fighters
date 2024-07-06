@@ -5,12 +5,10 @@ import { Center, HStack, Skeleton, Stack, Text } from "@chakra-ui/react";
 import React, { useMemo } from "react";
 import { NavLink } from "react-router-dom";
 import useConversationList from "../hooks/useConversationList";
-import { useAuthContext } from "../../auth/AuthContext";
 
 const ConversationListSidebar: React.FC = () => {
-  const { authUser } = useAuthContext();
-  const { data, isLoading } = useConversationList(authUser.id);
-
+  const { data, isLoading } = useConversationList();
+  console.log(data)
   const transformedData = useMemo(() => {
     if (!data) {
       return [];
@@ -18,6 +16,10 @@ const ConversationListSidebar: React.FC = () => {
     return data;
   }, [data]);
   if (transformedData.length === 0) {
+    return null;
+  }
+
+  if (data?.length === 0 || !data || isLoading) {
     return null;
   }
 

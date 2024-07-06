@@ -1,6 +1,7 @@
 import { axiosClient } from "../../../lib/axios";
 import { useQuery } from "@tanstack/react-query";
 import { TConversation } from "../types";
+import { useAuthContext } from "../../auth/AuthContext";
 
 type TGetAllConversationResponse = {
   message: string;
@@ -15,10 +16,12 @@ export const getConversationList = async (userId: string) => {
   return converationList;
 };
 
-const useConversationList = (userId: string) => {
+const useConversationList = () => {
+  const { authUser } = useAuthContext();
   return useQuery({
-    queryKey: ["conversations"],
-    queryFn: () => getConversationList(userId),
+    queryKey: ["conversations", authUser.id],
+    queryFn: () => getConversationList(authUser.id),
+    staleTime: 0,
   });
 };
 

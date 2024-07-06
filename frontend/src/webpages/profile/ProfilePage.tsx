@@ -13,6 +13,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import useSession from "./hooks/useSession";
 import EmptyChatPage from "../misc/EmptyChatPage";
+import { useAuthContext } from "../auth/AuthContext";
 
 type TProps = {
   displayName: string;
@@ -79,9 +80,12 @@ const InfoCard = ({ displayName, role, onClick }: TProps) => {
 
 const Profiles = () => {
   const navigate = useNavigate();
+  const { setAuthUser } = useAuthContext();
   const { mutateAsync, isPending } = useSession();
+
   const handleCardOnClick = async (user: TUser) => {
     localStorage.setItem("user-info", JSON.stringify(user));
+    setAuthUser(user);
     if (user.role === "customer") {
       const conversationId = await mutateAsync(user.id);
       navigate(`/chat/${conversationId}`);

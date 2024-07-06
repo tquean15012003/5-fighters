@@ -1,8 +1,8 @@
-import { Routes, Route, Outlet } from "react-router-dom";
+import { Routes, Route, Outlet, useLocation } from "react-router-dom";
 import MainLayout, { MainLayoutContent } from "./mainLayout";
 import { HStack, Hide } from "@chakra-ui/react";
 // import ConversationListSidebar from "./chat/components/ConversationListSidebar";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 // import ChatPage from "./chat/ChatPage";
 import ChatPage from "./chat/ChatPage";
 import ConversationListSidebar from "./chat/components/ConversationListSidebar";
@@ -11,6 +11,8 @@ import Profiles from "./profile/ProfilePage";
 import { FallbackLoader } from "./misc/FallBackLoader";
 import ChatSubscriptionProvider from "./chat/providers/ChatSubscriptionProvider";
 import EmptyChatPage from "./misc/EmptyChatPage";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAuthContext } from "./auth/AuthContext";
 
 const ProfileLayOut = () => {
   return (
@@ -33,6 +35,17 @@ const ProfileLayOut = () => {
 };
 
 const HomeLayOut = () => {
+  const location = useLocation();
+  const queryClient = useQueryClient();
+  const { authUser } = useAuthContext();
+  useEffect(() => {
+    if (location.pathname.startsWith("/chat")) {
+      queryClient.invalidateQueries({
+        queryKey: ["conversations", authUser.id],
+      });
+    }
+  }, [authUser.id, location, queryClient]);
+
   return (
     <ChatSubscriptionProvider>
       <MainLayout>
@@ -71,7 +84,7 @@ export const Webpages: React.FC = () => {
         />
       </Route>
       <Route element={<ProtectedLayout />}>
-        <Route path="" element={<HomeLayOut />}>
+        <Route element={<HomeLayOut />}>
           <Route
             path="/chat"
             element={
