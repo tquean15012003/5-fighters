@@ -63,6 +63,7 @@ class LLM:
         with self.client.beta.threads.runs.stream(
             thread_id=thread.id,
             assistant_id=self.assistant.id,
+            instructions=self.assistant.instructions,
             event_handler=EventHandler(
                 client=self.client,
                 thread_id=thread.id,
@@ -92,7 +93,7 @@ tasks: [str]""",
             assistant_params.update(
                 {
                     "name": "Auto Chat Assistant",
-                    "instructions": "You are tasked to answer the customer on the sale agent belf. Give the best answer based on the current interactiion. Use the suitable tools when necessary.",
+                    "instructions": "You are tasked to answer the customer on the sale agent belf. Give the best answer based on the current interactiion. Use the suitable Google Search when you need information about competitor products, use FAQs search if you need information about 5Figthers, and use both if you need both.",
                     "tools": AVAILABLE_TOOLS,
                 }
             )
